@@ -13,7 +13,8 @@
     "packages/*"
   ],
   "scripts": {
-    "check": "node scripts/check-scaffold.mjs"
+    "check": "node scripts/check-scaffold.mjs",
+    "setup:hooks": "git config --local core.hooksPath .githooks"
   },
   "repository": {
     "type": "git",

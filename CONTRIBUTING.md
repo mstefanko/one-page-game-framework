@@ -4,6 +4,8 @@ This is a planning and workspace scaffold, not a working game engine or composer
 
 Use Node 24 or newer (CI targets Node 24). Run `npm ci` then `npm run check`. There are currently no application build/dev commands or installed production libraries. Add those with the first usable implementation, including appropriate validation.
 
+The bootstrap checkout uses the repository's [.githooks/pre-commit](.githooks/pre-commit), which runs the scaffold check and staged whitespace check. For a fresh clone, `npm run setup:hooks` opts this repository into that hook; it replaces any inherited hooks path for this repository only. This avoids requiring the bootstrap machine's global Ruby/Overcommit configuration in a Node project. CI remains the shared check. Extend the hook and CI with meaningful implementation checks as code arrives.
+
 Use focused branches and PRs after bootstrap. State the behavior, validation performed and remaining limits. Keep schema changes, migrations, fixtures and documentation together. Do not edit historical archives. New original code/docs use MIT; preserve notices and asset provenance.
 
 Keep editor/storage/import dependencies out of playback bundles. The standalone composer and game studio must mount the same composer feature and use the same score and synth. The game runtime cannot depend on a mutable personal library. Check the package dependency graph as implementation is added.

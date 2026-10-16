@@ -16,6 +16,8 @@ Reference: [play Terminator: Liquid Metal](https://mstefanko.github.io/terminato
 
 The repository/library and composer plans specialize the original architecture and prioritize a standalone composer track. Start composer implementation with C1: validated score contracts and a measured backend proof. Game-runtime work retains the original headless and Canvas-versus-LittleJS gates. The reference game remains separate and unchanged.
 
+Track execution in [GitHub milestones](https://github.com/mstefanko/one-page-game-framework/milestones) and [implementation issues](https://github.com/mstefanko/one-page-game-framework/issues). The first composer task is [C1: contracts and backend proof](https://github.com/mstefanko/one-page-game-framework/issues/1), followed by [C2: the audible standalone slice](https://github.com/mstefanko/one-page-game-framework/issues/2). All seven seeded implementation issues are future work.
+
 ## Workspace
 
 `apps/composer` and `apps/studio` are shells for two entry points to the same planned editing features. Shared packages separate project documents, music event compilation, Web Audio playback, editing, import/export, and asset storage. See [package responsibilities](docs/03-repository-and-asset-strategy.md#2-boundaries-and-folder-ownership).
