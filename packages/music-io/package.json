@@ -1,0 +1,7 @@
+{
+  "name": "@onepage/music-io",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Import adapters and loss reports, source packs, MIDI, WAV and standalone-player export. Use the shared score compiler and audio backend; no alternate synth."
+}

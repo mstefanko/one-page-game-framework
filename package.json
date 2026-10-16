@@ -1,0 +1,22 @@
+{
+  "name": "one-page-game-framework",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Modular creative tools and a planned runtime for self-contained one-page games.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=24"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "check": "node scripts/check-scaffold.mjs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mstefanko/one-page-game-framework.git"
+  }
+}

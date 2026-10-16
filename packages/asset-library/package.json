@@ -1,0 +1,7 @@
+{
+  "name": "@onepage/asset-library",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Asset identity, immutable revisions, dependency closure and storage interfaces. Browser/local adapters share contracts; no mandatory cloud service."
+}

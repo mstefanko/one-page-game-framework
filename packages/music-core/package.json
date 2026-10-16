@@ -1,0 +1,7 @@
+{
+  "name": "@onepage/music-core",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "DOM-free musical tick math, score compilation, canonical event traces and cue decisions. No React, Web Audio, filesystem or game-simulation dependency."
+}

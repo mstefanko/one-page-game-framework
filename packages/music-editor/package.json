@@ -1,0 +1,7 @@
+{
+  "name": "@onepage/music-editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Reusable React editing feature: patterns, piano roll, drums, arrangement, patches and cue audition. Receive host/storage capabilities rather than importing application shells."
+}

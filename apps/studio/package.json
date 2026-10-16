@@ -1,0 +1,7 @@
+{
+  "name": "@onepage/studio-app",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Full game studio shell. Mount the same music-editor and supply project, cue and asset-library context."
+}
