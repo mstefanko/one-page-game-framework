@@ -432,13 +432,114 @@ describe("instrumented preview bridge", () => {
 
 describe("optional native sound effect audition", () => {
   it("permits only an advertised existing SFX asset after a trusted handshake", async () => {
-    const auditionSfx=vi.fn(); const s=setup({auditionSfx});
-    const ready=await s.host.connect(); expect(ready.capabilities.auditionSfx).toBe(true);
-    s.host.auditionSfx("jump"); await flush(); expect(auditionSfx).toHaveBeenCalledExactlyOnceWith("jump");
-    expect(()=>s.host.auditionSfx("explore")).toThrow("unsupported or unknown");
-    s.childInbox.emit(s.command("auditionSfx",{assetId:"jump",extra:true}),s.hostWindow,HOST);
-    s.childInbox.emit(s.command("auditionSfx",{assetId:"jump"}),s.hostWindow,"https://wrong.example");
-    await flush(); expect(auditionSfx).toHaveBeenCalledTimes(1);
-    const unsupported=setup(); await unsupported.host.connect(); expect(()=>unsupported.host.auditionSfx("jump")).toThrow("unsupported");
+    const auditionSfx = vi.fn();
+    const s = setup({ auditionSfx });
+    const ready = await s.host.connect();
+    expect(ready.capabilities.auditionSfx).toBe(true);
+    s.host.auditionSfx("jump");
+    await flush();
+    expect(auditionSfx).toHaveBeenCalledExactlyOnceWith("jump");
+    expect(() => s.host.auditionSfx("explore")).toThrow(
+      "unsupported or unknown",
+    );
+    s.childInbox.emit(
+      s.command("auditionSfx", { assetId: "jump", extra: true }),
+      s.hostWindow,
+      HOST,
+    );
+    s.childInbox.emit(
+      s.command("auditionSfx", { assetId: "jump" }),
+      s.hostWindow,
+      "https://wrong.example",
+    );
+    await flush();
+    expect(auditionSfx).toHaveBeenCalledTimes(1);
+    const unsupported = setup();
+    await unsupported.host.connect();
+    expect(() => unsupported.host.auditionSfx("jump")).toThrow("unsupported");
   });
+});
+
+describe("independent game and host music ownership", () => {
+  it("acknowledges a routing change only after the runtime has suppressed its music", async () => {
+    let complete!: () => void;
+    const setMusicSource = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          complete = resolve;
+        }),
+    );
+    const s = setup({ setMusicSource });
+    expect((await s.host.connect()).capabilities.musicSource).toBe(true);
+    let acknowledged = false;
+    const routed = s.host.setMusicSource("host").then(() => {
+      acknowledged = true;
+    });
+    await flush();
+    expect(setMusicSource).toHaveBeenCalledExactlyOnceWith("host");
+    expect(acknowledged).toBe(false);
+    expect(s.callbacks.pause).toHaveBeenCalledOnce();
+    complete();
+    await routed;
+    expect(acknowledged).toBe(true);
+    s.childInbox.emit(
+      s.command("setMusicSource", { source: "host", extra: true }),
+      s.hostWindow,
+      HOST,
+    );
+    s.childInbox.emit(
+      s.command("setMusicSource", { source: "other" }),
+      s.hostWindow,
+      HOST,
+    );
+    await flush();
+    expect(setMusicSource).toHaveBeenCalledTimes(1);
+  });
+  it("rejects unavailable routing and cancels pending ownership on disposal", async () => {
+    const unsupported = setup();
+    await unsupported.host.connect();
+    await expect(unsupported.host.setMusicSource("host")).rejects.toThrow(
+      "unsupported",
+    );
+    const s = setup({ setMusicSource: () => new Promise<void>(() => {}) });
+    await s.host.connect();
+    const pending = s.host.setMusicSource("host");
+    const rejection = expect(pending).rejects.toThrow("disposed");
+    s.host.dispose();
+    await rejection;
+    // Do not block fixture cleanup on the deliberately unresolved callback.
+    disposals.pop();
+  });
+});
+
+it("correlates rapid host → runtime → host routing acknowledgements with their requests", async () => {
+  const completes: (() => void)[] = [];
+  const s = setup({
+    setMusicSource: () =>
+      new Promise<void>((resolve) => completes.push(resolve)),
+  });
+  await s.host.connect();
+  const acknowledged: string[] = [];
+  const first = s.host
+    .setMusicSource("host")
+    .then(() => acknowledged.push("first"));
+  const middle = s.host
+    .setMusicSource("runtime")
+    .then(() => acknowledged.push("middle"));
+  const last = s.host
+    .setMusicSource("host")
+    .then(() => acknowledged.push("last"));
+  await flush();
+  expect(completes).toHaveLength(1);
+  completes[0]!();
+  await first;
+  expect(acknowledged).toEqual(["first"]);
+  await flush();
+  completes[1]!();
+  await middle;
+  expect(acknowledged).toEqual(["first", "middle"]);
+  await flush();
+  completes[2]!();
+  await last;
+  expect(acknowledged).toEqual(["first", "middle", "last"]);
 });

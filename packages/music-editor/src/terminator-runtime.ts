@@ -39,6 +39,7 @@ const project = (
 ).__TERMINATOR_PROJECT__;
 const canonical = new AudioEngine();
 let playbackGeneration = 0;
+let hostMusic = false;
 let running = false,
   contextId = "title",
   draft: { assetId: string; score: Score } | undefined;
@@ -94,6 +95,24 @@ function updateReports() {
   }
 }
 function syncDraft() {
+  if (hostMusic) {
+    canonical.stop();
+    canonicalAsset = null;
+    if (AUDIO.ok) {
+      AUDIO.music.gain.cancelScheduledValues(AUDIO.ctx.currentTime);
+      AUDIO.music.gain.setValueAtTime(0, AUDIO.ctx.currentTime);
+      if (AUDIO.cur) {
+        retireScoreBus(AUDIO.scoreBus, AUDIO.ctx.currentTime);
+        AUDIO.cur = null;
+      }
+    }
+    wasOverridden = true;
+    if (sounding !== null) {
+      sounding = null;
+      report({ type: "soundingCue", assetId: null });
+    }
+    return;
+  }
   const active = running && draft && AUDIO.trackName === draft.assetId;
   if (active) {
     AUDIO.music?.gain.cancelScheduledValues(AUDIO.ctx.currentTime);
@@ -196,6 +215,7 @@ async function clearDraft() {
     AUDIO.trackName = null;
   }
   if (running) audioSync();
+  else if (hostMusic) syncDraft();
 }
 async function play() {
   const generation = playbackGeneration;
@@ -264,6 +284,22 @@ const runtime = createPreviewRuntime({
   hostOrigin: location.origin,
   catalog: project.catalog,
   callbacks: {
+    async setMusicSource(source) {
+      hostMusic = source === "host";
+      canonical.stop();
+      canonicalAsset = null;
+      // A cue can be unchanged while its owner changes. Request its pinned
+      // assignment again, including when Play follows a paused handoff.
+      if (!hostMusic) nativeCue = null;
+      if (!hostMusic && AUDIO.ok) {
+        AUDIO.music.gain.cancelScheduledValues(AUDIO.ctx.currentTime);
+        AUDIO.music.gain.setValueAtTime(1, AUDIO.ctx.currentTime);
+        AUDIO.trackName = null;
+        wasOverridden = false;
+      }
+      if (running) audioSync();
+      else if (hostMusic) syncDraft();
+    },
     loadContext: load,
     play,
     pause,
@@ -306,6 +342,9 @@ document.addEventListener("visibilitychange", () => {
 });
 // Debug-only observation aids local integration tests; there is no library write capability.
 (globalThis as any).__TERMINATOR_PREVIEW__ = {
+  get hostMusic() {
+    return hostMusic;
+  },
   get running() {
     return running;
   },

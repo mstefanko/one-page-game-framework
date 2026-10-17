@@ -1,4 +1,6 @@
-# Reedrunner musical Arcade
+# Reedrunner musical Arcade (initial experiment)
+
+The current controls and execution plan are in [Arcade experiments](15-arcade-experiments.md). This document records the first per-action gesture implementation; its capture and phrase-launch behavior has been replaced following playtest feedback.
 
 The Arcade is an original playable character performance surface for the existing song. Reedrunner carries a visible weapon, and strike, leap, dash and guard generate short musical gestures. The full song stays audible underneath. Generated phrases use the selected part's motif, sounding accompaniment and scale through `createArcadePhrase` in `@onepage/music-core`; percussion parts use kit pitches. This is a deterministic local composition tool, without a model/network dependency or imported character art.
 

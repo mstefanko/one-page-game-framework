@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import type { Score } from "@onepage/project";
+import { createStarter, type Score } from "@onepage/project";
 import { readAudioProject, saveAudioProject } from "@onepage/asset-library";
-import type { AudioEngine } from "@onepage/music-web-audio";
+import { AudioEngine } from "@onepage/music-web-audio";
 import {
   CONTEXTS,
   clone,
@@ -12,22 +12,35 @@ import {
   type ContextId,
   type SfxAsset,
 } from "./game-audio";
+import {
+  createGameDraft,
+  type GameComposeProps,
+  type GameMusicSource,
+} from "./game-music";
 import "./game-audio.css";
 export function LanternGameAudio({
   score,
   onEditScore,
-  engine,
+  engine: editorEngine,
+  musicControl,
 }: {
   score: Score;
-  onEditScore: (score: Score) => void;
+  onEditScore: GameComposeProps["onEditScore"];
+  musicControl: GameComposeProps["musicControl"];
   engine: AudioEngine;
 }) {
-  const [manifest, setManifest] = useState(() => createDemoManifest(score));
+  const runtimeEngine = useRef(new AudioEngine()).current;
+  const original = useRef(
+    createDemoManifest(createStarter("midnight-delivery")),
+  ).current;
+  const [manifest, setManifest] = useState(() => clone(original));
   const [selected, setSelected] = useState("cue");
   const [context, setContext] = useState<ContextId>("menu");
   const [running, setRunning] = useState(false);
   const [watch, setWatch] = useState(false);
-  const [draft, setDraft] = useState(false);
+  const [source, setSource] = useState<GameMusicSource>("original");
+  const sourceRef = useRef(source);
+  sourceRef.current = source;
   const [energy, setEnergy] = useState(1);
   const [x, setX] = useState(18);
   const [hits, setHits] = useState(0);
@@ -40,15 +53,33 @@ export function LanternGameAudio({
   const saving = useRef(false);
   const input = useRef<HTMLInputElement>(null);
   const alive = useRef(true);
+  const sourceIntent = useRef(0);
   const stops = useRef<(() => void)[]>([]);
   useEffect(() => {
     alive.current = true;
     return () => {
       alive.current = false;
-      engine.stop();
+      sourceIntent.current++;
+      editorEngine.stop();
+      void runtimeEngine.dispose();
+      musicControl.current = null;
       stops.current.forEach((stop) => stop());
     };
-  }, [engine]);
+  }, [runtimeEngine]);
+  useEffect(() => {
+    const hide = () => {
+      if (document.hidden) {
+        sourceIntent.current++;
+        runtimeEngine.stop();
+        editorEngine.stop();
+        stops.current.forEach((stop) => stop());
+        setRunning(false);
+        setWatch(false);
+      }
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => document.removeEventListener("visibilitychange", hide);
+  }, [runtimeEngine, editorEngine]);
   useEffect(() => {
     let cancelled = false;
     void readAudioProject("lantern-courier-demo")
@@ -111,48 +142,104 @@ export function LanternGameAudio({
     }
   }
   const asset = manifest.assets.find((a) => a.id === selected);
-  const assigned = manifest.assets.find(
+  const activeManifest = source === "original" ? original : manifest;
+  const assigned = activeManifest.assets.find(
     (a) =>
       a.id ===
-      manifest.usages.find(
+      activeManifest.usages.find(
         (u) =>
           u.contextId === context &&
-          manifest.assets.some((a) => a.id === u.assetId && a.kind === "music"),
+          activeManifest.assets.some(
+            (a) => a.id === u.assetId && a.kind === "music",
+          ),
       )?.assetId,
   );
+  async function activateWorking(intent = ++sourceIntent.current) {
+    if (!alive.current || intent !== sourceIntent.current)
+      throw new Error("Music source changed before playback started");
+    if (sourceRef.current === "working") return;
+    runtimeEngine.stop();
+    editorEngine.stop();
+    sourceRef.current = "working";
+    setSource("working");
+  }
+  musicControl.current = {
+    activateWorking: () => activateWorking(),
+    get running() {
+      return running;
+    },
+    get working() {
+      return sourceRef.current === "working";
+    },
+  };
+  async function chooseSource(next: GameMusicSource) {
+    const intent = ++sourceIntent.current;
+    try {
+      editorEngine.stop();
+      runtimeEngine.stop();
+      sourceRef.current = next;
+      setSource(next);
+      if (next === "working") await editorEngine.play(score, { loop: true });
+    } catch (e) {
+      setMessage(String(e));
+    }
+  }
+  async function compose(kind: "original" | "saved" | "fresh") {
+    const intent = ++sourceIntent.current;
+    const asset = (kind === "saved" ? manifest : original).assets.find(
+      (a) => a.id === selected,
+    );
+    if (asset?.kind !== "music") return;
+    try {
+      const next = await onEditScore(
+        kind === "fresh"
+          ? createGameDraft(asset.score, asset.name)
+          : clone(asset.score),
+      );
+      if (!next || !alive.current || intent !== sourceIntent.current) return;
+      await activateWorking(intent);
+      await editorEngine.play(next, { loop: true });
+      if (!alive.current || intent !== sourceIntent.current) return;
+      await start(false);
+      setMessage(
+        "Compose while the game and sound effects keep running. Working edits join at the next loop.",
+      );
+    } catch (e) {
+      setMessage(String(e));
+    }
+  }
   const sound = (id: string) => {
     const a = manifest.assets.find((a) => a.id === id);
     if (a?.kind === "sfx") {
       const s = a as SfxAsset;
       stops.current.push(
-        engine.previewNote(s.patch, s.pitch, 0.7, s.duration, 0.45),
+        runtimeEngine.previewNote(s.patch, s.pitch, 0.7, s.duration, 0.45),
       );
       stops.current = stops.current.slice(-32);
     }
   };
   useEffect(() => {
-    engine.stop();
+    runtimeEngine.stop();
     if (!running) return;
     let cancelled = false;
-    const music = draft
-      ? score
-      : assigned?.kind === "music"
+    const music =
+      source !== "working" && assigned?.kind === "music"
         ? assigned.score
         : null;
     if (music)
-      void engine
+      void runtimeEngine
         .play(music, { loop: context !== "victory", energy })
         .catch((error) => {
           if (!cancelled) setMessage(String(error));
         });
     return () => {
       cancelled = true;
-      engine.stop();
+      runtimeEngine.stop();
     };
-  }, [running, context, draft, score, manifest, engine]);
+  }, [running, context, source, manifest, runtimeEngine]);
   useEffect(() => {
-    engine.setEnergy(energy);
-  }, [energy, engine]);
+    runtimeEngine.setEnergy(energy);
+  }, [energy, runtimeEngine]);
   useEffect(() => {
     if (!running) return;
     const timer = setInterval(() => setFrame((f) => f + 1), 80);
@@ -197,9 +284,9 @@ export function LanternGameAudio({
     setMessage(`Checkpoint loaded: ${id}. Press Play to hear assigned audio.`);
   }
   async function start(replay: boolean) {
-    engine.stop();
+    runtimeEngine.stop();
     try {
-      await engine.enable();
+      await runtimeEngine.enable();
       if (!alive.current) return;
       setWatch(replay);
       setRunning(true);
@@ -249,7 +336,7 @@ export function LanternGameAudio({
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
   return (
-    <section className="game-audio">
+    <section className="game-audio ga-lantern">
       <header>
         <div>
           <h2>Game audio</h2>
@@ -270,7 +357,7 @@ export function LanternGameAudio({
             try {
               if (f.size > 4_000_000) throw new Error("Manifest too large");
               const m = parseManifest(await f.text());
-              engine.stop();
+              runtimeEngine.stop();
               setRunning(false);
               await commit(m);
               setSelected(m.assets[0]?.id ?? "");
@@ -281,9 +368,73 @@ export function LanternGameAudio({
           }}
         />
       </header>
-      <p className="ga-notice">
-        Explore music and sound effects in a playable example.
-      </p>
+      <div className="ga-compose-controls">
+        <label>
+          Cue target{" "}
+          <select
+            aria-label="Compose cue target"
+            value={asset?.kind === "music" ? selected : ""}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            {asset?.kind !== "music" && <option value="">Choose music</option>}
+            {manifest.assets
+              .filter((a) => a.kind === "music")
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <div className="ga-compose-actions">
+          <button
+            disabled={asset?.kind !== "music"}
+            onClick={() => void compose("original")}
+          >
+            Edit original
+          </button>
+          <button
+            disabled={asset?.kind !== "music"}
+            onClick={() => void compose("saved")}
+          >
+            Edit assigned
+          </button>
+          <button
+            disabled={asset?.kind !== "music"}
+            onClick={() => void compose("fresh")}
+          >
+            Start fresh with game
+          </button>
+        </div>
+        <label>
+          Music source{" "}
+          <select
+            aria-label="Game music source"
+            value={source}
+            onChange={(e) =>
+              void chooseSource(e.target.value as GameMusicSource)
+            }
+          >
+            <option value="original">Original game music</option>
+            <option value="saved">Saved assignments</option>
+            <option value="working">Working score · live</option>
+          </select>
+        </label>
+        <p className="ga-music-owner">
+          {source === "working"
+            ? "Music: editor transport · live edits join at the next loop. Game: simulation + sound effects."
+            : "Music + sound effects: game runtime."}
+        </p>
+        <button
+          disabled={!ready || asset?.kind !== "music"}
+          onClick={() => {
+            if (asset?.kind === "music")
+              void commit(pinDraft(manifest, asset.id, score));
+          }}
+        >
+          Pin working score to {asset?.name ?? "cue"}
+        </button>
+      </div>
       <div className="ga-layout">
         <aside>
           <h3>Audio catalog</h3>
@@ -388,20 +539,20 @@ export function LanternGameAudio({
             </div>
           </div>
           <div className="ga-toolbar">
-            <button onClick={() => void start(false)}>Play</button>
+            <button onClick={() => void start(false)}>Play game</button>
             <button onClick={() => void start(true)}>Watch replay</button>
             <button
               onClick={() => {
-                engine.stop();
+                runtimeEngine.stop();
                 setRunning(false);
                 setWatch(false);
               }}
             >
-              Pause sound
+              Pause game
             </button>
             <button
               onClick={() => {
-                engine.stop();
+                runtimeEngine.stop();
                 setRunning(false);
                 setWatch(false);
                 load("menu");
@@ -433,23 +584,6 @@ export function LanternGameAudio({
             />
             {energy}
           </label>
-          <div className="ga-source">
-            <strong>
-              {draft
-                ? "Previewing current working draft"
-                : "Playing pinned project snapshot"}
-            </strong>
-            <button onClick={() => setDraft((v) => !v)}>
-              {draft ? "Return to pinned" : "Preview current draft"}
-            </button>
-            <p>
-              {draft
-                ? "Draft changes are temporary. Project assignments remain pinned."
-                : assigned?.kind === "music"
-                  ? `${assigned.name} · v${assigned.revision}`
-                  : "No music assigned"}
-            </p>
-          </div>
           <p role="status">{message}</p>
         </main>
         <aside>
@@ -458,7 +592,7 @@ export function LanternGameAudio({
             <button
               onClick={async () => {
                 try {
-                  await engine.enable();
+                  await runtimeEngine.enable();
                   sound(asset.id);
                 } catch (err) {
                   setMessage(String(err));
@@ -467,28 +601,6 @@ export function LanternGameAudio({
             >
               Audition sound effect
             </button>
-          )}
-          {asset?.kind === "music" && (
-            <>
-              <button
-                onClick={() => {
-                  engine.stop();
-                  setRunning(false);
-                  onEditScore(clone(asset.score));
-                }}
-              >
-                Edit pinned snapshot as draft
-              </button>
-              <button
-                disabled={!ready}
-                onClick={() => {
-                  void commit(pinDraft(manifest, asset.id, score));
-                  setDraft(false);
-                }}
-              >
-                Save snapshot & apply current draft
-              </button>
-            </>
           )}
           <h4>Where used</h4>
           {asset &&

@@ -1,3 +1,12 @@
+export {
+  createArcadeExperimentPhrase,
+  createArcadeBacking,
+  arcadeBarTicks,
+  type ArcadeExperiment,
+  type ArcadeIntent,
+  type ArcadeBacking,
+  type ArcadeExperimentOptions,
+} from "./arcade-experiments";
 import { assertScore, PPQ, type Score } from "@onepage/project";
 export {
   createArcadePhrase,

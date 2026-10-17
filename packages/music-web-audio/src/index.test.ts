@@ -194,6 +194,96 @@ describe("shared audio lifecycle", () => {
     expect(engine.getDelayToTick(480)).toBe(0);
     await engine.dispose();
   });
+  it("applies only the latest live edit at a loop boundary without restarting the clock", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("AudioContext", Context);
+    const score = createBlankScore();
+    score.loop = { startTick: 480, endTick: 1440 };
+    score.patterns[0]!.notes = [
+      { id: "n", startTick: 480, durationTicks: 120, pitch: 60, velocity: 0.8 },
+    ];
+    const engine = new AudioEngine();
+    await engine.play(score, { loop: true });
+    const ctx = Context.instances[0];
+    ctx.currentTime = 0.28;
+    const edit = structuredClone(score);
+    edit.patterns[0]!.notes[0]!.pitch = 64;
+    engine.queueScore(edit);
+    edit.patterns[0]!.notes[0]!.pitch = 67;
+    engine.queueScore(edit);
+    edit.patterns[0]!.notes[0]!.pitch = 90;
+    expect(engine.hasQueuedScore).toBe(true);
+    expect(engine.getPositionTick()).toBeCloseTo(720);
+    ctx.currentTime = 0.9;
+    vi.advanceTimersByTime(25);
+    expect(ctx.sources).toHaveLength(2);
+    expect(ctx.sources[1]!.frequency.value).toBeCloseTo(
+      440 * 2 ** ((67 - 69) / 12),
+    );
+    expect(ctx.sources[1]!.start).toHaveBeenCalledWith(1.03);
+    // Scheduling ahead must not move the visible playhead ahead of real audio.
+    expect(engine.getPositionTick()).toBeCloseTo(1315.2);
+    expect(engine.hasQueuedScore).toBe(true);
+    ctx.currentTime = 1.28;
+    expect(engine.getPositionTick()).toBeCloseTo(720);
+    expect(engine.hasQueuedScore).toBe(false);
+    expect(engine.isPlaying).toBe(true);
+    await engine.dispose();
+  });
+  it("updates a silent loop, adopts new tempo/range, and cancels queued changes on stop", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("AudioContext", Context);
+    const score = createBlankScore();
+    score.loop = { startTick: 0, endTick: 960 };
+    const engine = new AudioEngine();
+    await engine.play(score, { loop: true });
+    const ctx = Context.instances[0];
+    ctx.currentTime = 0.28;
+    const next = structuredClone(score);
+    next.bpm = 60;
+    next.loop = { startTick: 480, endTick: 1440 };
+    next.patterns[0]!.notes = [
+      { id: "n", startTick: 480, durationTicks: 120, pitch: 60, velocity: 0.8 },
+    ];
+    engine.queueScore(next);
+    ctx.currentTime = 0.9;
+    vi.advanceTimersByTime(25);
+    expect(ctx.sources).toHaveLength(1);
+    expect(ctx.sources[0]!.start).toHaveBeenCalledWith(1.03);
+    expect(engine.getPositionTick()).toBeCloseTo(835.2);
+    ctx.currentTime = 1.53;
+    expect(engine.getPositionTick()).toBeCloseTo(720);
+    engine.queueScore(score);
+    engine.stop();
+    expect(engine.hasQueuedScore).toBe(false);
+    ctx.currentTime = 5;
+    vi.advanceTimersByTime(1000);
+    expect(ctx.sources).toHaveLength(1);
+    await engine.dispose();
+  });
+  it("retains each audible transport transition when several short loops fit in lookahead", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("AudioContext", Context);
+    const score = createBlankScore();
+    score.bpm = 400;
+    score.loop = { startTick: 0, endTick: 96 };
+    const engine = new AudioEngine();
+    await engine.play(score, { loop: true });
+    const ctx = Context.instances[0];
+    engine.queueScore({ ...score, loop: { startTick: 480, endTick: 576 } });
+    ctx.currentTime = 0.04;
+    vi.advanceTimersByTime(25);
+    engine.queueScore({ ...score, loop: { startTick: 960, endTick: 1056 } });
+    ctx.currentTime = 0.07;
+    vi.advanceTimersByTime(25);
+    ctx.currentTime = 0.19;
+    expect(engine.getPositionTick()).toBeCloseTo(512);
+    expect(engine.hasQueuedScore).toBe(true);
+    ctx.currentTime = 0.22;
+    expect(engine.getPositionTick()).toBeCloseTo(992);
+    expect(engine.hasQueuedScore).toBe(false);
+    await engine.dispose();
+  });
   it("changes energy without resetting transport and cancels ineligible scheduled layers", async () => {
     vi.useFakeTimers();
     vi.stubGlobal("AudioContext", Context);

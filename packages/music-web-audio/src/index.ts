@@ -189,6 +189,14 @@ export class AudioEngine {
   private looping = false;
   private energy = 3;
   private trackEnergy = new Map<string, number>();
+  private enqueue: ((score: Score) => void) | null = null;
+  private queued = false;
+  private nextTransports: {
+    origin: number;
+    start: number;
+    end: number;
+    bpm: number;
+  }[] = [];
   get isPlaying() {
     return this.playing;
   }
@@ -197,6 +205,26 @@ export class AudioEngine {
   }
   get state() {
     return this.context?.state ?? "closed";
+  }
+  get hasQueuedScore() {
+    this.syncTransport();
+    return this.queued || this.nextTransports.length > 0;
+  }
+  /** Replace a looping score at the next unscheduled loop boundary. Last edit wins. */
+  queueScore(score: Score) {
+    if (this.playing && this.looping) this.enqueue?.(score);
+  }
+  private syncTransport() {
+    while (
+      this.nextTransports.length &&
+      this.currentTime >= this.nextTransports[0]!.origin
+    ) {
+      const next = this.nextTransports.shift()!;
+      this.origin = next.origin;
+      this.rangeStart = next.start;
+      this.rangeEnd = next.end;
+      this.bpm = next.bpm;
+    }
   }
   async enable() {
     if (!this.context || this.context.state === "closed") {
@@ -214,7 +242,7 @@ export class AudioEngine {
     this.stop();
     const token = this.generation;
     const looping = options.loop ?? score.playback === "loop";
-    const plan = prepare(score, {
+    let plan = prepare(score, {
       ...options,
       energy: 3,
       startTick:
@@ -232,28 +260,89 @@ export class AudioEngine {
     this.looping = looping;
     this.origin = ctx.currentTime + 0.03;
     this.playing = true;
+    let scheduledScore = score,
+      scheduleOrigin = this.origin;
+    let pending: {
+      score: Score;
+      plan: ReturnType<typeof prepare>;
+      when: number;
+    } | null = null;
+    this.enqueue = (next) => {
+      // Snapshot before queuing: callers can continue editing their own score.
+      const snapshot = structuredClone(next);
+      const nextPlan = prepare(snapshot, {
+        ...options,
+        energy: 3,
+        startTick: options.startTick ?? snapshot.loop?.startTick,
+        endTick: options.endTick ?? snapshot.loop?.endTick,
+      });
+      const earliest = ctx.currentTime + LOOKAHEAD + 0.005;
+      const boundary =
+        scheduleOrigin +
+        Math.max(1, Math.ceil((earliest - scheduleOrigin) / plan.length)) *
+          plan.length;
+      pending = {
+        score: snapshot,
+        plan: nextPlan,
+        when: pending?.when ?? boundary,
+      };
+      this.queued = true;
+    };
     let cycle = 0,
       index = 0;
     const pump = () => {
       if (!this.playing || token !== this.generation) return;
+      this.syncTransport();
       for (const v of this.voices)
         if (v.end <= ctx.currentTime) this.voices.delete(v);
       const horizon = ctx.currentTime + LOOKAHEAD;
       let scheduled = 0;
       while (scheduled++ < MAX_EVENTS) {
+        const nextEvent = plan.events[index];
+        const nextWhen = nextEvent
+          ? scheduleOrigin +
+            cycle * plan.length +
+            ticksToSeconds(
+              Math.max(plan.start, nextEvent.startTick) - plan.start,
+              scheduledScore.bpm,
+            )
+          : scheduleOrigin + (cycle + 1) * plan.length;
+        if (
+          pending &&
+          pending.when <= horizon &&
+          (!plan.events.length || nextWhen >= pending.when)
+        ) {
+          scheduleOrigin = pending.when;
+          scheduledScore = pending.score;
+          plan = pending.plan;
+          this.nextTransports.push({
+            origin: scheduleOrigin,
+            start: plan.start,
+            end: plan.end,
+            bpm: scheduledScore.bpm,
+          });
+          this.trackEnergy = new Map(
+            scheduledScore.tracks.map((t) => [t.id, t.minEnergy]),
+          );
+          pending = null;
+          this.queued = false;
+          cycle = 0;
+          index = 0;
+          this.syncTransport();
+        }
         if (index >= plan.events.length) {
           if (!this.looping || !plan.events.length) break;
           cycle++;
           index = 0;
-          if (this.origin + cycle * plan.length > horizon) break;
+          if (scheduleOrigin + cycle * plan.length > horizon) break;
         }
         const event = plan.events[index];
         const when =
-          this.origin +
+          scheduleOrigin +
           cycle * plan.length +
           ticksToSeconds(
             Math.max(plan.start, event.startTick) - plan.start,
-            score.bpm,
+            scheduledScore.bpm,
           );
         if (when > horizon) break;
         index++;
@@ -261,15 +350,19 @@ export class AudioEngine {
         if (when < ctx.currentTime - 0.02) {
           if (
             this.looping &&
-            cycle * plan.length < ctx.currentTime - this.origin - plan.length
+            cycle * plan.length < ctx.currentTime - scheduleOrigin - plan.length
           ) {
-            cycle = Math.floor((ctx.currentTime - this.origin) / plan.length);
+            cycle = Math.floor(
+              (ctx.currentTime - scheduleOrigin) / plan.length,
+            );
             index = 0;
           }
           continue;
         }
         if ((this.trackEnergy.get(event.trackId) ?? 1) > this.energy) continue;
-        const patch = score.patches.find((p) => p.id === event.patchId);
+        const patch = scheduledScore.patches.find(
+          (p) => p.id === event.patchId,
+        );
         if (!patch) continue;
         if (this.voices.size >= MAX_VOICES) {
           this.stop();
@@ -278,7 +371,7 @@ export class AudioEngine {
         const duration = ticksToSeconds(
           Math.min(plan.end, event.startTick + event.durationTicks) -
             Math.max(plan.start, event.startTick),
-          score.bpm,
+          scheduledScore.bpm,
         );
         if (duration > 0) {
           const v = voice(
@@ -299,9 +392,9 @@ export class AudioEngine {
       if (
         !this.looping &&
         ctx.currentTime >=
-          this.origin +
+          scheduleOrigin +
             plan.length +
-            Math.max(0, ...score.patches.map((p) => p.release))
+            Math.max(0, ...scheduledScore.patches.map((p) => p.release))
       )
         this.stop();
     };
@@ -320,6 +413,7 @@ export class AudioEngine {
       }
   }
   getPositionTick() {
+    this.syncTransport();
     if (!this.playing) return this.rangeStart;
     let ticks =
       (Math.max(0, this.currentTime - this.origin) * this.bpm * 480) / 60;
@@ -329,6 +423,7 @@ export class AudioEngine {
   }
   /** Audio-clock delay to a score tick in the current pass; late notes start now. */
   getDelayToTick(tick: number) {
+    this.syncTransport();
     if (
       !this.playing ||
       !Number.isFinite(tick) ||
@@ -376,6 +471,9 @@ export class AudioEngine {
   stop() {
     this.generation++;
     this.playing = false;
+    this.enqueue = null;
+    this.queued = false;
+    this.nextTransports = [];
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     for (const v of this.voices) v.stop();

@@ -374,3 +374,109 @@
   margin-bottom: 14px;
   font-size: 12px;
 }
+.arcade-modes {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin: 12px 0;
+}
+.arcade-modes button {
+  display: grid;
+  gap: 5px;
+  text-align: left;
+  padding: 13px;
+  min-width: 0;
+}
+.arcade-modes small {
+  color: #b2c4c9;
+  font-size: 11px;
+}
+.arcade-modes button[aria-pressed="true"],
+.arcade-actions button[aria-pressed="true"] {
+  background: #254b48;
+  border-color: #8cd5bd;
+  box-shadow: inset 0 -2px #8cd5bd;
+}
+.arcade-mode-description {
+  color: #d9dfd9;
+  line-height: 1.6;
+  font-size: 13px;
+}
+.arcade-loop-progress {
+  height: 6px;
+  background: #344557;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.arcade-loop-progress span {
+  display: block;
+  height: 100%;
+  background: #b7dfb3;
+  transition: width 50ms linear;
+}
+.arcade-phrase-state {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  color: #cce3d1;
+  margin: 10px 0;
+}
+.arcade-ribbon {
+  position: absolute;
+  inset: 42px 14px 46px;
+  border: 1px dashed #abcec066;
+  border-radius: 14px;
+  background: linear-gradient(180deg, #b19bf222, #82dac222);
+  z-index: 3;
+  touch-action: none;
+  cursor: crosshair;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: end;
+  padding: 10px;
+  color: #d2e2d8;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+}
+.arcade-ribbon i {
+  position: absolute;
+  right: 12px;
+  font-style: normal;
+  color: #b6ffdc;
+  font-size: 32px;
+}
+.arcade-ribbon:focus-visible {
+  outline: 3px solid #f4cb78;
+}
+.arcade[data-mode="groove-fighter"] .arena {
+  background:
+    radial-gradient(ellipse at 66% 0%, #594766, transparent 70%),
+    linear-gradient(#2d213c, #55425c);
+}
+.arcade[data-mode="ribbon-lead"] .arena {
+  background:
+    radial-gradient(ellipse at 66% 0%, #33526b, transparent 70%),
+    linear-gradient(#182b3f, #31575b);
+}
+@media (max-width: 600px) {
+  .arcade-modes {
+    grid-template-columns: 1fr;
+  }
+  .arcade-modes button {
+    grid-template-columns: 1fr 1fr;
+    align-items: center;
+  }
+  .arcade-direction-controls {
+    flex-wrap: wrap;
+  }
+  .arcade-direction-controls button {
+    min-width: 100px;
+  }
+  .arcade-transport button {
+    flex: 1 1 130px;
+  }
+}

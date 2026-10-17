@@ -13,11 +13,17 @@ import {
   parseTerminatorProject,
   type TerminatorProject,
 } from "./terminator-project";
+import {
+  createGameDraft,
+  type GameComposeProps,
+  type GameMusicSource,
+} from "./game-music";
 import "./game-audio.css";
 
 type Props = {
   score: Score;
-  onEditScore: (score: Score) => void;
+  onEditScore: GameComposeProps["onEditScore"];
+  musicControl: GameComposeProps["musicControl"];
   engine: AudioEngine;
 };
 const base = `${import.meta.env.BASE_URL}local-games/terminator/`;
@@ -92,28 +98,102 @@ function TerminatorGameAudio({
   score,
   onEditScore,
   engine,
+  musicControl,
   project,
 }: Props & { project: TerminatorProject }) {
   const iframe = useRef<HTMLIFrameElement>(null),
     bridge = useRef<PreviewHost | null>(null),
     revision = useRef<number | null>(null),
     active = useRef(true),
+    sourceIntent = useRef(0),
     input = useRef<HTMLInputElement>(null);
   const [ready, setReady] = useState<PreviewReady>(),
     [selected, setSelected] = useState("title"),
     [context, setContext] = useState("title"),
     [message, setMessage] = useState("Connecting to the actual local game…"),
     [running, setRunning] = useState(false),
-    [draft, setDraft] = useState(false),
+    [source, setSource] = useState<GameMusicSource>("original"),
     [sounding, setSounding] = useState<string | null>(null),
     [lastSfx, setLastSfx] = useState<string>(),
     [overrides, setOverrides] = useState<Record<string, Score>>({}),
     [stored, setStored] = useState(false),
     [recovery, setRecovery] = useState<unknown>();
   const overridesRef = useRef(overrides),
-    draftRef = useRef({ enabled: draft, selected, score });
+    sourceRef = useRef(source);
   overridesRef.current = overrides;
-  draftRef.current = { enabled: draft, selected, score };
+  sourceRef.current = source;
+  async function activateWorking(intent = ++sourceIntent.current) {
+    if (!bridge.current?.ready) return;
+    if (sourceRef.current !== "working") {
+      engine.stop();
+      await bridge.current.setMusicSource("host");
+      if (!active.current || intent !== sourceIntent.current)
+        throw new Error("Music source changed before playback started");
+      sourceRef.current = "working";
+      setSource("working");
+    }
+  }
+  musicControl.current = {
+    activateWorking: () => activateWorking(),
+    get running() {
+      return running;
+    },
+    get working() {
+      return sourceRef.current === "working";
+    },
+  };
+  async function chooseSource(next: GameMusicSource) {
+    const intent = ++sourceIntent.current;
+    try {
+      if (next === "working") {
+        await activateWorking(intent);
+        if (!active.current || intent !== sourceIntent.current) return;
+        await engine.play(score, { loop: true });
+      } else {
+        engine.stop();
+        sourceRef.current = next;
+        setSource(next);
+        bridge.current?.clearPreview();
+        if (next === "saved" && sounding && overridesRef.current[sounding])
+          bridge.current?.previewDraft(
+            sounding,
+            overridesRef.current[sounding],
+          );
+        await bridge.current?.setMusicSource("runtime");
+      }
+    } catch (e) {
+      if (active.current && intent === sourceIntent.current)
+        setMessage(String(e));
+    }
+  }
+  async function compose(kind: "original" | "saved" | "fresh") {
+    const intent = ++sourceIntent.current;
+    const original = project.scores[selected];
+    if (!original) return;
+    try {
+      const input =
+        kind === "fresh"
+          ? createGameDraft(original, asset?.name ?? selected)
+          : structuredClone(
+              kind === "saved" ? (overrides[selected] ?? original) : original,
+            );
+      const opened = await onEditScore(input);
+      if (!opened || !active.current || intent !== sourceIntent.current) return;
+      await activateWorking(intent);
+      if (!active.current || intent !== sourceIntent.current) return;
+      await engine.play(opened, { loop: true });
+      if (!active.current || intent !== sourceIntent.current) return;
+      bridge.current?.play();
+      setRunning(true);
+      setMessage(
+        kind === "fresh"
+          ? "Fresh blank loop ready. Game and sound effects keep running while you compose."
+          : "Original cue copied into an editable draft. Game and sound effects keep running.",
+      );
+    } catch (e) {
+      setMessage(String(e));
+    }
+  }
   useEffect(() => {
     active.current = true;
     void readAudioProject(project.catalog.projectId)
@@ -142,34 +222,43 @@ function TerminatorGameAudio({
       .catch((e) => setMessage(String(e)));
     return () => {
       active.current = false;
+      sourceIntent.current++;
       bridge.current?.dispose();
       bridge.current = null;
       engine.stop();
+      musicControl.current = null;
     };
   }, [project, engine]);
   useEffect(() => {
-    if (!ready) return;
+    const hide = () => {
+      if (document.hidden) {
+        sourceIntent.current++;
+        setRunning(false);
+        engine.stop();
+      }
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => document.removeEventListener("visibilitychange", hide);
+  }, [engine]);
+  useEffect(() => {
+    if (!ready || source !== "saved") return;
     const b = bridge.current;
     if (!b) return;
-    if (draft && project.scores[selected]) b.previewDraft(selected, score);
-    else {
-      b.clearPreview();
-      if (sounding && overrides[sounding])
-        b.previewDraft(sounding, overrides[sounding]);
-    }
-  }, [draft, score, selected, ready, overrides]);
+    if (sounding && overrides[sounding])
+      b.previewDraft(sounding, overrides[sounding]);
+    else b.clearPreview();
+  }, [ready, source, overrides]);
   function event(e: RuntimePreviewEvent) {
     if (!active.current) return;
     if (e.type === "contextChanged") setContext(e.contextId);
     if (e.type === "soundingCue") setSounding(e.assetId);
     if (e.type === "triggerSfx") setLastSfx(e.assetId);
     if (e.type === "error") setMessage(e.message);
-    if (e.type === "requestCue") {
-      const current = draftRef.current;
+    if (e.type === "requestCue" && sourceRef.current !== "working") {
       const value =
-        current.enabled && current.selected === e.assetId
-          ? current.score
-          : overridesRef.current[e.assetId];
+        sourceRef.current === "saved"
+          ? overridesRef.current[e.assetId]
+          : undefined;
       if (value) bridge.current?.previewDraft(e.assetId, value);
       else bridge.current?.clearPreview();
     }
@@ -194,7 +283,7 @@ function TerminatorGameAudio({
       setReady(response);
       b.loadContext("title", "start");
       setMessage(
-        "Actual game connected. Press Play, then click the game if your browser asks to enable sound.",
+        "Actual game connected. Press Play game, or Edit original to compose with the game running.",
       );
     } catch (e) {
       if (bridge.current === b) setMessage(String(e));
@@ -204,10 +293,23 @@ function TerminatorGameAudio({
     try {
       if (!bridge.current || !ready)
         throw new Error("Game preview is not connected");
-      engine.stop();
       action(bridge.current);
     } catch (e) {
       setMessage(String(e));
+    }
+  }
+  async function startGame() {
+    try {
+      if (engine.isPlaying) await activateWorking();
+      command((b) => {
+        b.play();
+        setRunning(true);
+        setMessage(
+          "Game running. Compose in the editor while game controls and sound effects stay active.",
+        );
+      });
+    } catch (e) {
+      if (active.current) setMessage(String(e));
     }
   }
   function load(id: string) {
@@ -295,13 +397,75 @@ function TerminatorGameAudio({
           }}
         />
       </header>
-      <p className="ga-notice">
-        The original game renders and owns audio here. Editable imports preserve
-        native note timing; three editor energy levels approximate native heat
-        thresholds, and synth patches approximate its orchestral timbres. Draft
-        loops start at the repeat region. Previewing a draft changes only the
-        selected cue.
-      </p>
+      <div className="ga-compose-controls">
+        <label>
+          Cue target{" "}
+          <select
+            aria-label="Compose cue target"
+            value={project.scores[selected] ? selected : ""}
+            onChange={(e) => setSelected(e.target.value)}
+          >
+            {!project.scores[selected] && (
+              <option value="">Choose music</option>
+            )}
+            {project.catalog.assets
+              .filter((a) => a.kind === "music")
+              .map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+          </select>
+        </label>
+        <div className="ga-compose-actions">
+          <button
+            disabled={!ready || !project.scores[selected]}
+            onClick={() => void compose("original")}
+          >
+            Edit original
+          </button>
+          <button
+            disabled={!ready || !overrides[selected]}
+            onClick={() => void compose("saved")}
+          >
+            Edit assigned
+          </button>
+          <button
+            disabled={!ready || !project.scores[selected]}
+            onClick={() => void compose("fresh")}
+          >
+            Start fresh with game
+          </button>
+        </div>
+        <label>
+          Music source{" "}
+          <select
+            aria-label="Game music source"
+            value={source}
+            disabled={!ready}
+            onChange={(e) =>
+              void chooseSource(e.target.value as GameMusicSource)
+            }
+          >
+            <option value="original">Original game music</option>
+            <option value="saved">Saved assignments</option>
+            <option value="working">Working score · live</option>
+          </select>
+        </label>
+        <p className="ga-music-owner">
+          {source === "working"
+            ? "Music: editor transport · live edits join at the next loop. Game: simulation + sound effects."
+            : "Music + sound effects: game runtime."}
+        </p>
+        <button
+          disabled={!stored || !ready || !project.scores[selected]}
+          onClick={() => {
+            void save({ ...overrides, [selected]: structuredClone(score) });
+          }}
+        >
+          Pin working score to {asset?.name ?? "cue"}
+        </button>
+      </div>
       <div className="ga-layout">
         <aside>
           <h3>Audio catalog</h3>
@@ -341,19 +505,8 @@ function TerminatorGameAudio({
             />
           </div>
           <div className="ga-toolbar">
-            <button
-              disabled={!ready}
-              onClick={() =>
-                command((b) => {
-                  b.play();
-                  setRunning(true);
-                  setMessage(
-                    "Game running. Use the original mouse/keyboard or touch controls inside the frame.",
-                  );
-                })
-              }
-            >
-              Play
+            <button disabled={!ready} onClick={() => void startGame()}>
+              Play game
             </button>
             <button
               disabled={!ready}
@@ -361,11 +514,13 @@ function TerminatorGameAudio({
                 command((b) => {
                   b.pause();
                   setRunning(false);
-                  setMessage("Game and audio paused.");
+                  setMessage(
+                    "Game paused. Working music uses the editor Play / Stop control.",
+                  );
                 })
               }
             >
-              Pause sound
+              Pause game
             </button>
             <button
               disabled={!ready}
@@ -399,29 +554,11 @@ function TerminatorGameAudio({
             </select>
           </label>
           <p className="ga-observed">
-            Sounding cue: {sounding ?? "silent"} · Last effect:{" "}
-            {lastSfx ?? "none"}
+            {source === "working"
+              ? "Working music: editor transport"
+              : `Sounding cue: ${sounding ?? "silent"}`}{" "}
+            · Last effect: {lastSfx ?? "none"}
           </p>
-          <div className="ga-source">
-            <strong>
-              {draft
-                ? "Previewing current working draft"
-                : overrides[sounding ?? ""]
-                  ? "Playing saved project override"
-                  : "Original game audio"}
-            </strong>
-            <button
-              disabled={!ready || asset?.kind !== "music"}
-              onClick={() => setDraft((v) => !v)}
-            >
-              {draft ? "Return to pinned" : "Preview current draft"}
-            </button>
-            <p>
-              {draft
-                ? `Temporary override for ${selected}; play a mapped context below to hear it.`
-                : "Saved overrides apply only to this preview project."}
-            </p>
-          </div>
           <p role="status">{message}</p>
         </main>
         <aside>
@@ -429,37 +566,11 @@ function TerminatorGameAudio({
           {asset?.kind === "music" ? (
             <>
               <button
-                onClick={() => {
-                  command((b) => b.pause());
-                  setRunning(false);
-                  onEditScore(
-                    structuredClone(
-                      overrides[selected] ?? project.scores[selected]!,
-                    ),
-                  );
-                }}
-              >
-                Edit pinned snapshot as draft
-              </button>
-              <button
-                disabled={!stored || !ready}
-                onClick={() => {
-                  void save({
-                    ...overrides,
-                    [selected]: structuredClone(score),
-                  });
-                  setDraft(false);
-                }}
-              >
-                Save snapshot & apply current draft
-              </button>
-              <button
                 disabled={!overrides[selected]}
                 onClick={() => {
                   const next = { ...overrides };
                   delete next[selected];
                   void save(next);
-                  setDraft(false);
                 }}
               >
                 Return to original

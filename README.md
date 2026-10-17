@@ -4,7 +4,7 @@ A modular toolkit for making small games and creative assets that are useful on 
 
 **Status:** a working composer with Sketch/Studio, live takes, a playable musical character in Arcade, IndexedDB drafts/versions, MIDI and portable packs, WAV and offline HTML players. Game audio can adapt the actual local Terminator game through an explicit source import; the original Lantern Courier fixture remains available without that import. The full game framework and arbitrary game import remain planned. Source publication does not deploy a composer website.
 
-Start with [the playable composer and real-game plan](docs/14-playable-composer-plan.md), [the original composer implementation plan](docs/06-pocket-score-implementation.md), [validation and remaining gates](docs/08-implementation-validation.md), and [backend proof](docs/07-backend-proof.md).
+Start with [the Arcade experiments plan](docs/15-arcade-experiments.md), [composing alongside the game](docs/16-compose-with-game.md), [the musical-play option study](docs/17-musical-play-research.md), and [validation and remaining gates](docs/08-implementation-validation.md). The [integrated plan](docs/14-playable-composer-plan.md), [original composer plan](docs/06-pocket-score-implementation.md), and [backend proof](docs/07-backend-proof.md) retain the architectural context.
 
 ## Plans and design handoff
 
@@ -40,7 +40,7 @@ Drafts and saved versions live in IndexedDB on this browser/origin. They are not
 
 ## Playable composition and the actual game
 
-Arcade's character uses strike, leap, dash and guard to create short phrases from the selected song. Weapon changes select a sound; faster actions increase note density and emphasis at the same song tempo. Kept performances become editable parts in the ordinary score. The [music-theory research](docs/11-arcade-music-theory.md) explains what the phrase generator knows and the limits of its harmony guidance.
+Arcade offers three experiments: **Phrase Rider** steers continuing musical ideas, **Groove Fighter** conducts drum grooves and fills, and **Ribbon Lead** turns held movement into a scale-guided melody. Jam without recording, choose the backing, then capture one bounded loop. Weapons select instruments; kept takes become ordinary editable parts. The [musical-play research](docs/17-musical-play-research.md) compares ten concepts and explains the limits of the music rules.
 
 To connect your existing local Terminator checkout:
 
@@ -50,6 +50,8 @@ npm run dev
 ```
 
 Open a song, then **Game audio** or **Preview game beside editor**. The project selector offers Terminator and the original fixture. The import generates an instrumented development copy and an editable audio catalog; it does not edit the original game. Generated files are ignored by Git and excluded from `npm run build`, so the public static distribution contains no imported game assets. A fresh checkout can use the original fixture immediately.
+
+Use **Edit original** to begin with a copy of a game cue, or **Start fresh** to compose a new one. Working-score monitoring keeps the game and its sound effects running while the editor plays your music. Live score edits apply at a loop boundary. Switching back to original/saved music is an audition choice; assigning the result to a cue remains an explicit save.
 
 See the [Arcade implementation plan](docs/13-arcade-implementation.md), [Terminator integration guide](docs/12-terminator-integration.md), and [integrated execution plan](docs/14-playable-composer-plan.md) for controls, package ownership, acceptance gates and follow-up experiments.
 

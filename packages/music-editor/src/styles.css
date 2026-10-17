@@ -1232,3 +1232,26 @@ article.starter {
   font-size: 16px;
   letter-spacing: 1px;
 }
+
+/* Keep one preview tree mounted while its workspace presentation changes. */
+.game-dock-collapsed .ga-layout,
+.game-dock-collapsed .game-audio > header,
+.game-dock-collapsed .game-audio > .ga-notice {
+  display: none;
+}
+.game-dock-collapsed .game-audio {
+  padding: 12px 20px;
+  border-radius: 0;
+}
+.game-dock-collapsed .ga-compose-controls {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.game-dock-collapsed .ga-compose-controls p {
+  margin: 0;
+}
+.game-dock-collapsed .ga-project-picker { margin: 10px 20px; }
+.full-game { grid-column: 1 / -1; min-width: 0; }
+.side-game .ga-compose-controls { margin-bottom: 14px; }

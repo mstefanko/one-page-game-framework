@@ -50,21 +50,17 @@ test("Arcade keeps editable notes; game catalog loads music and SFX contexts", a
   await page.goto("/");
   await page.getByRole("button", { name: "New song / live pad" }).click();
   await page.getByRole("button", { name: "Arcade · lab", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Start fixed-tempo loop", exact: true })
-    .click();
   await page.getByLabel("Phrase intensity").selectOption("1");
-  const target = page.getByRole("button", {
-    name: "Leap · rising phrase",
-    exact: true,
-  });
-  await target.click();
+  await page.getByLabel("Arcade loop length").selectOption("1");
+  await page
+    .getByRole("button", { name: "Record next loop", exact: true })
+    .click();
   await expect(
-    page.getByRole("button", { name: "Keep 2 notes", exact: true }),
-  ).toBeEnabled();
-  await page.getByRole("button", { name: "Keep 2 notes", exact: true }).click();
+    page.getByText("TAKE READY TO REVIEW", { exact: true }),
+  ).toBeVisible({ timeout: 7000 });
+  await page.getByRole("button", { name: /^Keep [1-9]\d* notes$/ }).click();
   await page.getByRole("button", { name: /Add as a new part/ }).click();
-  await expect(page.locator(".pattern-tools")).toContainText("2 notes");
+  await expect(page.locator(".pattern-tools")).toContainText("5 notes");
   await page.getByRole("button", { name: "Game audio", exact: true }).click();
   await page.getByLabel("Game preview project").selectOption("fixture");
   await expect(
@@ -73,9 +69,9 @@ test("Arcade keeps editable notes; game catalog loads music and SFX contexts", a
   await page.getByRole("button", { name: /Lantern step/ }).click();
   await page.getByRole("button", { name: /Moonlit path.*move/ }).click();
   await expect(page.locator(".ga-viewport")).toHaveClass(/ga-explore/);
-  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.getByRole("button", { name: "Play game", exact: true }).click();
   await page.getByRole("button", { name: "Walk →", exact: true }).click();
-  await page.getByRole("button", { name: "Pause sound", exact: true }).click();
+  await page.getByRole("button", { name: "Pause game", exact: true }).click();
   expect(errors).toEqual([]);
 });
 
@@ -149,27 +145,23 @@ test("a game checkpoint stays visible while editing; assignments update only exp
     .click();
   await page.getByLabel("Game preview project").selectOption("fixture");
   await page.getByRole("button", { name: "combat", exact: true }).click();
-  await page
-    .getByRole("button", { name: "Preview current draft", exact: true })
-    .click();
-  await page.getByRole("button", { name: "Play", exact: true }).click();
+  await page.getByLabel("Game music source").selectOption("working");
+  await page.getByRole("button", { name: "Play game", exact: true }).click();
   await page.getByLabel("Song title").fill("Moss Lantern revised");
   await expect(page.locator(".ga-viewport")).toHaveClass(/ga-combat/);
-  await expect(page.locator(".ga-source")).toContainText(
-    "Previewing current working draft",
-  );
-  await expect(page.locator(".transport button").first()).toBeDisabled();
+  await expect(page.getByLabel("Game music source")).toHaveValue("working");
+  await expect(page.locator(".transport button").first()).toBeEnabled();
   await page.getByRole("button", { name: "Game audio", exact: true }).click();
   await expect(page.locator(".ga-viewport")).toHaveClass(/ga-combat/);
   await expect(page.locator(".ga-layout > aside").first()).toContainText(
-    "Moss Lantern",
+    "Midnight Delivery",
   );
   await expect(page.locator(".ga-layout > aside").first()).not.toContainText(
     "Moss Lantern revised",
   );
   await page
     .getByRole("button", {
-      name: "Save snapshot & apply current draft",
+      name: /Pin working score to/,
       exact: true,
     })
     .click();
@@ -192,10 +184,10 @@ test("a game checkpoint stays visible while editing; assignments update only exp
     "Moss Lantern revised",
   );
   await page
-    .getByRole("button", { name: "Edit pinned snapshot as draft", exact: true })
+    .getByRole("button", { name: "Edit assigned", exact: true })
     .click();
   await expect(page.getByLabel("Song title")).toHaveValue(
-    "Moss Lantern revised",
+    "Moss Lantern revised (game snapshot copy)",
   );
   await expect(page.locator(".workspace")).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);

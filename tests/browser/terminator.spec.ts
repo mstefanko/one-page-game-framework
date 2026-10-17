@@ -57,12 +57,12 @@ test("actual imported game loads checkpoints, owns audio, accepts drafts and res
       .toBe(id);
     await page
       .locator(".ga-toolbar")
-      .getByRole("button", { name: "Play", exact: true })
+      .getByRole("button", { name: "Play game", exact: true })
       .click();
     await page.waitForTimeout(100);
     await page
       .locator(".ga-toolbar")
-      .getByRole("button", { name: "Pause sound", exact: true })
+      .getByRole("button", { name: "Pause game", exact: true })
       .click();
   }
   await page.getByLabel("Game scene checkpoint").selectOption("title");
@@ -71,30 +71,15 @@ test("actual imported game loads checkpoints, owns audio, accepts drafts and res
     .first()
     .getByRole("button", { name: /^title/ })
     .click();
-  await page
-    .getByRole("button", { name: "Preview current draft", exact: true })
-    .click();
+  await page.getByLabel("Game music source").selectOption("working");
   await page
     .locator(".ga-toolbar")
-    .getByRole("button", { name: "Play", exact: true })
+    .getByRole("button", { name: "Play game", exact: true })
     .click();
   await expect
     .poll(() =>
-      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.draftAssetId),
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.hostMusic),
     )
-    .toBe("title");
-  await expect
-    .poll(() =>
-      game.evaluate(
-        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
-      ),
-    )
-    .toBe(true);
-  await game.evaluate(() =>
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "n" })),
-  );
-  await expect
-    .poll(() => game.evaluate(() => (window as any).AUDIO.muted))
     .toBe(true);
   await expect
     .poll(() =>
@@ -103,27 +88,26 @@ test("actual imported game loads checkpoints, owns audio, accepts drafts and res
       ),
     )
     .toBe(false);
-  await game.evaluate(() =>
-    window.dispatchEvent(new KeyboardEvent("keydown", { key: "n" })),
-  );
+  await expect(
+    page
+      .locator(".transport")
+      .getByRole("button", { name: "■ Stop", exact: true }),
+  ).toBeEnabled();
+  await page.getByLabel("Game scene checkpoint").selectOption("stage-0");
+  await expect(
+    page
+      .locator(".transport")
+      .getByRole("button", { name: "■ Stop", exact: true }),
+  ).toBeEnabled();
   await expect
     .poll(() =>
-      game.evaluate(
-        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
-      ),
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.hostMusic),
     )
     .toBe(true);
   await page
     .locator(".ga-toolbar")
-    .getByRole("button", { name: "Pause sound", exact: true })
+    .getByRole("button", { name: "Pause game", exact: true })
     .click();
-  await expect
-    .poll(() =>
-      game.evaluate(
-        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
-      ),
-    )
-    .toBe(false);
   await page
     .getByRole("button", { name: "Reset checkpoint", exact: true })
     .click();
@@ -143,21 +127,38 @@ test("actual imported game loads checkpoints, owns audio, accepts drafts and res
     .getByRole("button", { name: /^title/ })
     .click();
   await page
-    .getByRole("button", { name: "Edit pinned snapshot as draft", exact: true })
+    .getByRole("button", { name: "Edit original", exact: true })
     .click();
   await expect(page.getByLabel("Song title")).toHaveValue(/^title/);
+  await game.evaluate(() => {
+    (window as any).__sameMountedGame = "same";
+  });
+  await expect
+    .poll(() =>
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.running),
+    )
+    .toBe(true);
+  const ticksBefore = await game.evaluate(() => (window as any).G.tick);
+  await page.getByRole("button", { name: "Studio", exact: true }).click();
+  await expect
+    .poll(() => game.evaluate(() => (window as any).G.tick))
+    .toBeGreaterThan(ticksBefore);
+  await expect
+    .poll(() => game.evaluate(() => (window as any).__sameMountedGame))
+    .toBe("same");
+
   await page.getByLabel("Song title").fill("Terminator title revised");
   await expect(
     page.getByTitle("Terminator: Liquid Metal playable preview"),
   ).toBeVisible();
   await page.screenshot({
-    path: ".local/terminator-validation.png",
+    path: ".local/compose-with-game-validation.png",
     fullPage: true,
   });
   await page.getByRole("button", { name: "Game audio", exact: true }).click();
   await page
     .getByRole("button", {
-      name: "Save snapshot & apply current draft",
+      name: /Pin working score to/,
       exact: true,
     })
     .click();
@@ -190,5 +191,62 @@ test("actual imported game loads checkpoints, owns audio, accepts drafts and res
       ).json()
     ).scores.title.title,
   ).toBe("title");
+  await page.getByLabel("Game scene checkpoint").selectOption("title");
+  await page.getByLabel("Game music source").selectOption("saved");
+  await page
+    .locator(".ga-toolbar")
+    .getByRole("button", { name: "Play game", exact: true })
+    .click();
+  await expect
+    .poll(() =>
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.draftAssetId),
+    )
+    .toBe("title");
+  await expect
+    .poll(() =>
+      game.evaluate(
+        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
+      ),
+    )
+    .toBe(true);
+  // Restore a saved assignment in the SAME running scene. A checkpoint change
+  // would mask a missing cue request during the ownership handoff.
+  await page.getByLabel("Game music source").selectOption("working");
+  await expect
+    .poll(() =>
+      game.evaluate(
+        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
+      ),
+    )
+    .toBe(false);
+  await page.getByLabel("Game music source").selectOption("saved");
+  await expect
+    .poll(() =>
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.draftAssetId),
+    )
+    .toBe("title");
+  await expect
+    .poll(() =>
+      game.evaluate(
+        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
+      ),
+    )
+    .toBe(true);
+  await page.getByLabel("Game music source").selectOption("original");
+  await expect
+    .poll(() =>
+      game.evaluate(() => (window as any).__TERMINATOR_PREVIEW__.draftAssetId),
+    )
+    .toBe(null);
+  await expect
+    .poll(() =>
+      game.evaluate(
+        () => (window as any).__TERMINATOR_PREVIEW__.canonicalPlaying,
+      ),
+    )
+    .toBe(false);
+  await expect
+    .poll(() => game.evaluate(() => Boolean((window as any).AUDIO.cur)))
+    .toBe(true);
   expect(errors).toEqual([]);
 });

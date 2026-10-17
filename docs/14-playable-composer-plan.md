@@ -2,6 +2,16 @@
 
 Implementation revision: October 17, 2026. This extends [Pocket Score](06-pocket-score-implementation.md) in the existing personal monorepo. The original composer work is retained, including Sketch, Studio, library drafts/versions, exports, and the standalone player. The Arcade and external-game sections below supersede the earlier demo-only direction.
 
+## Revision after playable feedback
+
+The first gesture implementation below is retained as the initial slice's rationale. The user's playtest found that repeated one-beat gestures produced disconnected two-note fragments. The current execution plans are [Arcade experiments](15-arcade-experiments.md) and [composing alongside the game](16-compose-with-game.md), informed by [ten musical-play concepts and primary-source research](17-musical-play-research.md). These supersede the initial per-action phrase and exclusive runtime-audio decisions below.
+
+Three experiments separate musical agency: Phrase Rider directs a continuing motif; Groove Fighter directs rhythmic arrangement and temporary fills; Ribbon Lead controls a flowing pitched line. Rehearsal creates no take. Recording is explicitly armed, bounded to a visible loop, and kept as ordinary notes with the auditioned instruments. Backing choices make room for the performed role. Density and intensity stay on the song's clock; continuous pitch-bend and uncontrolled tempo gestures remain outside the note-only score contract.
+
+For game scoring, keep a single preview instance mounted across editor/full-workspace layout changes. Two starting actions copy the original cue or create a fresh cue. Working-score mode gives the host editor ownership of music while the runtime continues simulation and SFX; the acknowledged source handoff prevents competing music streams. Draft edits are coalesced and adopted at the next unscheduled loop boundary without restarting the transport. Original/saved playback is a source choice, and pinning remains an explicit assignment action.
+
+The supervising integration owns shared audio scheduling and cross-workstream validation. Independent GPT-6.1 sol implementation agents own Arcade and the game workflow; a third researches and reviews musical behavior. Verify bounded capture, take parity, source handoff, live-edit timing, iframe continuity, scene changes, interrupted playback and static-release exclusions before publishing the revised branch.
+
 ## Product decisions
 
 Compose one song at a time. Sketch and Studio remain direct editors of the canonical score. Arcade is another way to perform new material into that score. Game audio is the place to hear a song in its intended gameplay context. Keep these purposes distinct: changing a weapon in Arcade should not change a weapon or combat balance in the embedded game.

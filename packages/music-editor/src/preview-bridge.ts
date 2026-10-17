@@ -32,6 +32,7 @@ export interface PreviewCapabilities {
   readonly seek: boolean;
   readonly previewDraft: boolean;
   readonly auditionSfx?: boolean;
+  readonly musicSource?: boolean;
 }
 export interface PreviewReady {
   readonly catalog: PreviewCatalog;
@@ -44,7 +45,12 @@ export type RuntimePreviewEvent =
   | { type: "triggerSfx"; assetId: string; usageId?: string }
   | { type: "soundingCue"; assetId: string | null }
   | { type: "position"; tick: number }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | {
+      type: "musicSourceChanged";
+      source: "runtime" | "host";
+      requestId: string;
+    };
 
 /** Injectable only to support tests or a host window other than the global window. */
 export interface PreviewMessageWindow {
@@ -77,6 +83,7 @@ export interface PreviewRuntimeCallbacks {
   previewDraft?(assetId: string, score: Score): AsyncAction;
   clearPreview?(): AsyncAction;
   auditionSfx?(assetId: string): AsyncAction;
+  setMusicSource?(source: "runtime" | "host"): AsyncAction;
 }
 
 const object = (value: unknown): value is Record<string, unknown> =>
@@ -223,11 +230,18 @@ function readyPayload(value: unknown): value is PreviewReady {
     return false;
   const c = value.capabilities;
   return (
-    exact(c, ["audioOwner", "seek", "previewDraft", "auditionSfx"]) &&
+    exact(c, [
+      "audioOwner",
+      "seek",
+      "previewDraft",
+      "auditionSfx",
+      "musicSource",
+    ]) &&
     c.audioOwner === "runtime" &&
     typeof c.seek === "boolean" &&
     typeof c.previewDraft === "boolean" &&
-    (c.auditionSfx === undefined || typeof c.auditionSfx === "boolean")
+    (c.auditionSfx === undefined || typeof c.auditionSfx === "boolean") &&
+    (c.musicSource === undefined || typeof c.musicSource === "boolean")
   );
 }
 function asset(catalog: PreviewCatalog, value: unknown, kind: "music" | "sfx") {
@@ -242,6 +256,12 @@ function runtimeEvent(
 ): value is RuntimePreviewEvent {
   if (!object(value)) return false;
   switch (value.type) {
+    case "musicSourceChanged":
+      return (
+        exact(value, ["type", "source", "requestId"]) &&
+        id(value.requestId) &&
+        ["runtime", "host"].includes(value.source as string)
+      );
     case "contextChanged":
       return (
         exact(value, ["type", "contextId"]) &&
@@ -292,6 +312,7 @@ export interface PreviewHost {
   previewDraft(assetId: string, score: Score): void;
   clearPreview(): void;
   auditionSfx(assetId: string): void;
+  setMusicSource(source: "runtime" | "host"): Promise<void>;
   dispose(): void;
 }
 
@@ -312,6 +333,14 @@ export function createPreviewHost(options: {
   let session = "",
     ready: PreviewReady | undefined,
     disposed = false;
+  const ownership = new Map<
+    string,
+    {
+      resolve(): void;
+      reject(error: Error): void;
+      timer: ReturnType<typeof setTimeout>;
+    }
+  >();
   let pending:
     | {
         resolve(value: PreviewReady): void;
@@ -325,6 +354,13 @@ export function createPreviewHost(options: {
       pending.reject(new Error(message));
       pending = undefined;
     }
+  }
+  function cancelOwnership(message: string) {
+    for (const wait of ownership.values()) {
+      clearTimeout(wait.timer);
+      wait.reject(new Error(message));
+    }
+    ownership.clear();
   }
   const listener = (event: MessageEvent) => {
     if (
@@ -348,8 +384,18 @@ export function createPreviewHost(options: {
       event.data.type === "event" &&
       ready &&
       runtimeEvent(event.data.payload, ready.catalog)
-    )
-      options.onEvent?.(structuredClone(event.data.payload));
+    ) {
+      const value = event.data.payload;
+      if (value.type === "musicSourceChanged") {
+        const wait = ownership.get(value.requestId);
+        if (wait) {
+          clearTimeout(wait.timer);
+          ownership.delete(value.requestId);
+          wait.resolve();
+        }
+      }
+      options.onEvent?.(structuredClone(value));
+    }
   };
   local.addEventListener("message", listener);
   function command(type: string, payload: unknown = null) {
@@ -364,6 +410,7 @@ export function createPreviewHost(options: {
       if (disposed) throw new Error("Preview bridge is disposed");
       if (session) send(options.target, targetOrigin, session, "disconnect");
       cancel("Preview connection was replaced");
+      cancelOwnership("Preview connection was replaced");
       ready = undefined;
       session = crypto.randomUUID();
       const current = session;
@@ -429,6 +476,30 @@ export function createPreviewHost(options: {
       assertScore(score);
       command("previewDraft", { assetId, score });
     },
+    setMusicSource(source) {
+      if (
+        !ready?.capabilities.musicSource ||
+        !["runtime", "host"].includes(source)
+      )
+        return Promise.reject(
+          new Error("Independent music routing is unsupported"),
+        );
+      return new Promise<void>((resolve, reject) => {
+        const requestId = crypto.randomUUID();
+        const timer = setTimeout(() => {
+          ownership.delete(requestId);
+          reject(new Error("Music routing timed out"));
+        }, timeout);
+        ownership.set(requestId, { resolve, reject, timer });
+        try {
+          command("setMusicSource", { source, requestId });
+        } catch (e) {
+          clearTimeout(timer);
+          ownership.delete(requestId);
+          reject(e);
+        }
+      });
+    },
     auditionSfx(assetId) {
       if (
         !ready?.capabilities.auditionSfx ||
@@ -448,6 +519,7 @@ export function createPreviewHost(options: {
         if (session) send(options.target, targetOrigin, session, "disconnect");
       } finally {
         disposed = true;
+        cancelOwnership("Preview bridge was disposed");
         ready = undefined;
         cancel("Preview bridge was disposed");
         local.removeEventListener("message", listener);
@@ -478,6 +550,7 @@ export function createPreviewRuntime(options: {
     seek: !!options.callbacks.seek,
     previewDraft: !!options.callbacks.previewDraft,
     ...(options.callbacks.auditionSfx ? { auditionSfx: true } : {}),
+    ...(options.callbacks.setMusicSource ? { musicSource: true } : {}),
   };
   let session: string | undefined,
     disposed = false,
@@ -536,6 +609,24 @@ export function createPreviewRuntime(options: {
     if (message.session !== session) return;
     const payload = message.payload;
     let action: (() => AsyncAction) | undefined;
+    if (
+      message.type === "setMusicSource" &&
+      capabilities.musicSource &&
+      object(payload) &&
+      exact(payload, ["source", "requestId"]) &&
+      id(payload.requestId) &&
+      ["runtime", "host"].includes(payload.source as string)
+    )
+      action = async () => {
+        const source = payload.source as "runtime" | "host";
+        await options.callbacks.setMusicSource!(source);
+        if (ready && session === message.session)
+          report({
+            type: "musicSourceChanged",
+            source,
+            requestId: payload.requestId as string,
+          });
+      };
     if (message.type === "disconnect" && payload === null) {
       session = undefined;
       ready = false;

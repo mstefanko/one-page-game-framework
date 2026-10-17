@@ -17,6 +17,7 @@ import {
 } from "@onepage/asset-library";
 import { AudioEngine, renderScore, encodeWav } from "@onepage/music-web-audio";
 import { GameAudio } from "./GameAudio";
+import type { GameMusicControl } from "./game-music";
 import { Arcade, type ArcadeLane, type ArcadeTake } from "./Arcade";
 import { captureNote, getPitchForRole } from "./capture";
 import {
@@ -79,8 +80,13 @@ export function Composer() {
     [auditionId, setAuditionId] = useState<string | null>(null),
     [sidePreview, setSidePreview] = useState(false),
     [wavRange, setWavRange] = useState<"whole" | "loop">("whole"),
-    [wavTail, setWavTail] = useState(false);
+    [wavTail, setWavTail] = useState(false),
+    [musicQueued, setMusicQueued] = useState(false),
+    [musicStarting, setMusicStarting] = useState(false);
   const engine = useRef(new AudioEngine()).current,
+    gameMusic = useRef<GameMusicControl | null>(null),
+    musicIntent = useRef(0),
+    musicStartingRef = useRef(false),
     library = useRef<AssetLibrary | null>(null),
     libraryReady = useRef<Promise<AssetLibrary> | null>(null),
     takeRef = useRef<Note[]>([]),
@@ -139,8 +145,21 @@ export function Composer() {
     const timer = setInterval(() => {
       setPlaying(engine.isPlaying);
       setPosition(engine.getPositionTick());
+      setMusicQueued(engine.hasQueuedScore);
     }, 50);
     return () => clearInterval(timer);
+  }, [engine]);
+  useEffect(() => {
+    const hide = () => {
+      if (document.hidden) {
+        musicIntent.current++;
+        musicStartingRef.current = false;
+        setMusicStarting(false);
+        engine.stop();
+      }
+    };
+    document.addEventListener("visibilitychange", hide);
+    return () => document.removeEventListener("visibilitychange", hide);
   }, [engine]);
   useEffect(() => {
     const warn = (event: BeforeUnloadEvent) => {
@@ -248,6 +267,9 @@ export function Composer() {
     nextSurface: Surface = "notes",
   ) {
     navigationGeneration.current++;
+    musicIntent.current++;
+    musicStartingRef.current = false;
+    setMusicStarting(false);
     engine.stop();
     setScore(next);
     current.current = next;
@@ -312,42 +334,52 @@ export function Composer() {
     setDialog(null);
     setDrawer(false);
   }
-  async function editGameScore(input: Score) {
+  async function editGameScore(input: Score): Promise<Score | null> {
     const leaving = leaveSafe();
     const token = navigationGeneration.current;
     const source = current.current;
-    if (!(await leaving)) return;
-    try {
-      const lib = await libraryReady.current;
-      const stored = await lib?.readDraft(input.id);
-      if (token !== navigationGeneration.current || current.current !== source)
-        return;
-      if (
-        unkeptTakeRef.current ||
-        takeRef.current.length ||
-        arcadeTakeRef.current.notes.length ||
-        padInput.current
-      ) {
-        setError(
-          "A new take started while the snapshot was loading. Keep or discard it before loading a game snapshot.",
-        );
-        return;
-      }
-      if (stored) {
-        revisions.current.set(input.id, stored.revision);
-        open(stored.score);
-      } else {
-        const fork = copy(input);
-        fork.id = uid();
-        fork.title += " (game snapshot copy)";
-        open(fork, true);
-      }
-      setSidePreview(true);
-      setView("sketch");
-    } catch (e) {
-      setError(message(e));
-    }
+    if (!(await leaving)) return null;
+    if (
+      token !== navigationGeneration.current ||
+      current.current !== source ||
+      unkeptTakeRef.current ||
+      padInput.current
+    )
+      return null;
+    // Always fork the selected source; an old draft with the same source ID is not the original.
+    const fork = copy(input);
+    fork.id = uid();
+    if (!fork.title.startsWith("New music"))
+      fork.title += " (game snapshot copy)";
+    open(fork, true);
+    setSidePreview(true);
+    setView("sketch");
+    return fork;
   }
+  async function prepareWorkingMusic() {
+    if (
+      sidePreview ||
+      view === "game" ||
+      gameMusic.current?.working ||
+      gameMusic.current?.running
+    )
+      await gameMusic.current?.activateWorking();
+  }
+  useEffect(() => {
+    if (
+      score &&
+      engine.isPlaying &&
+      gameMusic.current?.working &&
+      surface !== "arcade" &&
+      !padRecording
+    ) {
+      try {
+        engine.queueScore(score);
+      } catch (e) {
+        setError(message(e));
+      }
+    }
+  }, [score, engine, surface, padRecording]);
   async function audition(id: string) {
     try {
       if (auditionId === id && engine.isPlaying) {
@@ -409,15 +441,37 @@ export function Composer() {
     setScore(next);
     persist(next);
   }
-  async function play() {
+  async function play(restart = false) {
+    const intent = ++musicIntent.current;
+    if (!restart && (engine.isPlaying || musicStartingRef.current)) {
+      engine.stop();
+      musicStartingRef.current = false;
+      setMusicStarting(false);
+      return;
+    }
+    musicStartingRef.current = true;
+    setMusicStarting(true);
     try {
-      if (engine.isPlaying) {
-        engine.stop();
-        return;
+      if (score) {
+        const monitor =
+          sidePreview ||
+          view === "game" ||
+          gameMusic.current?.working ||
+          gameMusic.current?.running;
+        await prepareWorkingMusic();
+        if (intent !== musicIntent.current || document.hidden) return;
+        await engine.play(score, {
+          energy,
+          ...(monitor ? { loop: true } : {}),
+        });
       }
-      if (score) await engine.play(score, { energy });
     } catch (e) {
       setError(message(e));
+    } finally {
+      if (intent === musicIntent.current) {
+        musicStartingRef.current = false;
+        setMusicStarting(false);
+      }
     }
   }
   const track = score?.tracks.find((t) => t.id === trackId) ?? score?.tracks[0],
@@ -440,7 +494,6 @@ export function Composer() {
       );
       return;
     }
-    if (!sidePreview) engine.stop();
     lastPadTick.current = null;
     finishPadNote();
     setPadRecording(false);
@@ -509,7 +562,10 @@ export function Composer() {
         if (pendingTakePatch) {
           const keptPatch = { ...pendingTakePatch, id: uid() };
           s.patches.push(keptPatch);
-          s.tracks.find((t) => t.id === track!.id)!.patchId = keptPatch.id;
+          const keptTrack = s.tracks.find((t) => t.id === track!.id)!;
+          keptTrack.patchId = keptPatch.id;
+          if (pendingArcadeLanes[0])
+            keptTrack.role = pendingArcadeLanes[0].role;
         }
       });
     } else {
@@ -562,7 +618,8 @@ export function Composer() {
     setPreviousTakes([]);
     setDialog(null);
     setPendingTake([]);
-    if (pendingTakePatch) setArcadeTake({ notes: [], patch: null, lanes: [] });
+    if (pendingTakePatch || pendingArcadeLanes.length)
+      setArcadeTake({ notes: [], patch: null, lanes: [] });
     setPendingTakePatch(null);
     setPendingArcadeLanes([]);
     setSurface("notes");
@@ -578,6 +635,7 @@ export function Composer() {
       Math.min(0.999, (e.clientY - rect.top) / rect.height),
     );
     try {
+      await prepareWorkingMusic();
       await engine.enable();
       if (!engine.isPlaying || lastPadTick.current === null)
         await engine.play(score, {
@@ -712,7 +770,10 @@ export function Composer() {
     const handler = (e: KeyboardEvent) => {
       if ((e.target as HTMLElement).closest("input,select,textarea,button"))
         return;
-      if (e.code === "Space" && !sidePreview && view !== "game") {
+      if (
+        e.code === "Space" &&
+        !(e.target as HTMLElement).closest(".ga-viewport")
+      ) {
         e.preventDefault();
         void play();
       }
@@ -924,16 +985,22 @@ export function Composer() {
             <div className="transport">
               <button
                 className={playing ? "primary playing" : "primary"}
-                disabled={sidePreview || view === "game"}
-                title={
-                  sidePreview || view === "game"
-                    ? "Use Play and Pause in the game preview"
-                    : undefined
-                }
+                title="Play or stop the working score; game controls are separate"
                 onClick={() => void play()}
               >
-                {playing ? "■ Stop" : "▶ Play"}
+                {playing || musicStarting ? "■ Stop" : "▶ Play"}
               </button>
+              {musicQueued && (
+                <>
+                  <small role="status">Changes queued for next loop</small>
+                  <button
+                    title="Restart the working music with your latest edits; the game keeps running"
+                    onClick={() => void play(true)}
+                  >
+                    Hear edits now
+                  </button>
+                </>
+              )}
               <span className="time">
                 {(position / 480).toFixed(1)} <small>BEATS</small>
               </span>
@@ -976,9 +1043,7 @@ export function Composer() {
                 key={v}
                 className={view === v ? "active" : ""}
                 onClick={() => {
-                  if (!sidePreview) engine.stop();
                   setView(v);
-                  if (v === "sketch") setSurface(sidePreview ? "notes" : "pad");
                 }}
               >
                 {v === "game" ? "Game audio" : v[0]!.toUpperCase() + v.slice(1)}
@@ -989,14 +1054,12 @@ export function Composer() {
                 className={sidePreview ? "active" : ""}
                 onClick={() => {
                   padUp();
-                  engine.stop();
                   setSidePreview((v) => !v);
-                  setSurface("notes");
                 }}
               >
                 {" "}
                 {sidePreview
-                  ? "Close game preview"
+                  ? "Collapse game preview"
                   : "Preview game beside editor"}
               </button>
             )}
@@ -1015,22 +1078,22 @@ export function Composer() {
                 : "composition-layout"
             }
           >
-            {(view === "game" || sidePreview) && (
-              <div className={view === "game" ? "full-game" : "side-game"}>
-                <GameAudio
-                  score={score}
-                  onEditScore={(next) => void editGameScore(next)}
-                  engine={engine}
-                />
-                {sidePreview && view !== "game" && (
-                  <p className="hint">
-                    Edit notes while this checkpoint stays visible. Game preview
-                    owns sound; use its Play/Pause and Preview current draft
-                    controls. Close preview to perform on the pad or Arcade.
-                  </p>
-                )}
-              </div>
-            )}
+            <div
+              className={
+                view === "game"
+                  ? "full-game"
+                  : sidePreview
+                    ? "side-game"
+                    : "game-dock-collapsed"
+              }
+            >
+              <GameAudio
+                score={score}
+                onEditScore={editGameScore}
+                engine={engine}
+                musicControl={gameMusic}
+              />
+            </div>
             {view !== "game" && (
               <main className="workspace">
                 <aside className="parts">
@@ -1119,20 +1182,16 @@ export function Composer() {
                     {score.sections.map((s) => (
                       <button
                         key={s.id}
-                        disabled={sidePreview}
-                        title={
-                          sidePreview
-                            ? "Use the game preview transport"
-                            : undefined
-                        }
                         onClick={() =>
-                          void engine
-                            .play(score, {
-                              startTick: s.startTick,
-                              endTick: s.startTick + s.lengthTicks,
-                              loop: false,
-                              energy,
-                            })
+                          void prepareWorkingMusic()
+                            .then(() =>
+                              engine.play(score, {
+                                startTick: s.startTick,
+                                endTick: s.startTick + s.lengthTicks,
+                                loop: false,
+                                energy,
+                              }),
+                            )
                             .catch((e) => setError(message(e)))
                         }
                       >
@@ -1265,11 +1324,14 @@ export function Composer() {
                         <button
                           key={v}
                           className={surface === v ? "active" : ""}
-                          disabled={
-                            (sidePreview && v !== "notes") ||
-                            (v === "pad" && arcadeTake.notes.length > 0)
-                          }
-                          onClick={() => setSurface(v)}
+                          disabled={v === "pad" && arcadeTake.notes.length > 0}
+                          onClick={() => {
+                            if (v === "arcade")
+                              void prepareWorkingMusic()
+                                .then(() => setSurface(v))
+                                .catch((e) => setError(message(e)));
+                            else setSurface(v);
+                          }}
                         >
                           {v === "pad"
                             ? "Live pad"
@@ -1372,6 +1434,7 @@ export function Composer() {
                                 void safely(async () => {
                                   if (!patch || !track || !pattern) return;
                                   try {
+                                    await prepareWorkingMusic();
                                     await engine.enable();
                                     engine.previewNote(
                                       patch,
@@ -1569,10 +1632,11 @@ export function Composer() {
                                   });
                               });
                               setSelected(id);
-                              if (patch && !sidePreview)
-                                void engine
-                                  .enable()
-                                  .then(() => engine.previewNote(patch, pitch));
+                              if (patch)
+                                void prepareWorkingMusic()
+                                  .then(() => engine.enable())
+                                  .then(() => engine.previewNote(patch, pitch))
+                                  .catch((e) => setError(message(e)));
                             }}
                           />
                         )}
@@ -1791,8 +1855,7 @@ export function Composer() {
                           value={energy}
                           onChange={(e) => {
                             setEnergy(Number(e.target.value));
-                            if (!sidePreview)
-                              engine.setEnergy(Number(e.target.value));
+                            engine.setEnergy(Number(e.target.value));
                           }}
                         >
                           <option value="1">Calm</option>
@@ -2040,7 +2103,6 @@ export function Composer() {
                     max="400"
                     value={score.bpm}
                     onChange={(e) => {
-                      engine.stop();
                       edit((s) => {
                         s.bpm = Number(e.target.value);
                       });
