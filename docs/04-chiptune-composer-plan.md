@@ -178,7 +178,7 @@ The standalone hosted tool can download a framework pack even when it cannot wri
 
 ## 9. Interface requirements
 
-Use ordinary readable DOM controls around the musical canvas/grid. Desktop hierarchy: persistent transport/save state; starter/library browser; arrangement and selected pattern; contextual inspector; bottom status/diagnostics. Pattern, Arrange and Game can be modes instead of three permanently competing canvases. The five concepts may change this architecture while preserving task coverage.
+Use ordinary readable DOM controls around the musical canvas/grid. Desktop hierarchy: persistent transport/save state; starter/library browser; arrangement and selected pattern; contextual inspector; bottom status/diagnostics. Pattern, Arrange and Game can be modes instead of three permanently competing canvases. The six concepts may change this architecture while preserving task coverage.
 
 Minimum screens: starter home, active pattern editor, arrangement, sound inspector, MIDI conversion review, library/revision picker, purpose-based export, and game cue/intensity audition. Provide meaningful empty, loading, saved, unsaved, render-in-progress, cancel, error, conflict, unsupported-import and interrupted-audio states.
 
@@ -213,4 +213,36 @@ Adopted defaults: standalone first, same format/backend as games, export plus pe
 
 Main risks: building too much editor before a useful loop, underestimating MIDI conversion, preview/export drift, browser save loss, synthesis/node leaks, and treating a shared library as a live mutable game dependency. C1–C6 place a specific proof at each risk.
 
-No additional decision is required to start C1. After the five design concepts exist, choose an interaction direction and validate it by having a novice remix a starter and an experienced musician import/edit/export a short MIDI. Cloud sharing and authentic hardware emulation require separate product decisions. Backend benchmarks, device behavior, installed-package audits and usability results remain unverified until implementation.
+No additional decision is required to start C1. After the six design concepts exist, choose an interaction direction and validate it by having a novice remix a starter and an experienced musician import/edit/export a short MIDI. Cloud sharing and authentic hardware emulation require separate product decisions. Backend benchmarks, device behavior, installed-package audits and usability results remain unverified until implementation.
+
+## 12. Exploratory sixth direction: Flowpad
+
+Added October 16, 2026 in response to the request for a flowing live scratchpad. The full self-contained interaction brief is in [the design prompt](05-claude-design-prompt.md#direction-6-deep-brief-flowpad--paint-a-living-loop). This is an alternative authoring surface over the existing score/backend, not a second audio architecture or an implemented feature.
+
+**Core bet:** a user can play a backing tune, choose an instrument brush, and shape a new part through hand gestures. Vertical position controls melodic register/contour; horizontal position controls sparse-to-busy activity; the audio clock supplies time. Pointer-down plays, release makes space. A separate loop ribbon records time. Musical guidance considers the current harmony and backing melody, while preserving the user's contour, rests and density. Keeping a completed scratch pass creates ordinary editable note events.
+
+This is not an established novelty claim. Google's [Paint with Music](https://www.experiments.withgoogle.com/paint-with-music) explicitly connects painting and musical composition, and Artiphon's [Chorda introduction](https://artiphon.com/blogs/artiphon-blog/artiphon-reinvents-the-musical-instrument-again-with-chorda-the-band-in-your-backpack) describes gesture-sensitive playing and assisted chords. Those historical primary-source descriptions establish adjacent ideas; they do not establish current product availability or prove equivalent workflows. Our proposed differentiation is context-aware live sketching, recoverable loop passes, intention-based editing, and portable/game-ready output in one coherent tool.
+
+### A feasible first experiment
+
+Use one two-bar original starter with explicitly authored chord regions and a monophonic Bell brush. The starter's fixed harmony avoids depending on automated chord recognition. Implement vertical contour and three activity bands, one-loop capture, keep/undo, and playback of frozen notes. Then compare conventional “Catch next pass” with a rolling last-two-pass memory. Do not build every brush, accompaniment generator or ribbon sculptor before users can intentionally create and keep a phrase.
+
+The guidance layer should favor chord tones on strong beats, permit scale/passing notes within a declared policy, constrain leaps/register and leave room around the starter melody. Add hysteresis at pitch/activity boundaries so input jitter does not retrigger notes. A stored seed and rule version make optional variations repeatable. “Answer” can reduce density in occupied passages, but must not suppress the user's entire gesture; show assistance and offer a more direct mode. Fitting a key alone does not guarantee a musically satisfying phrase.
+
+Use event time, not DOM pointer-event count, to drive synthesis. Resample/coalesce input and bound generated notes. Initial contact needs responsive audible feedback; waiting for a slow beat subdivision can feel broken. Test a prompt initial attack on the fine 480-PPQ clock with subsequent rhythmic pulses aligned to the backing. Keep the actual scheduled note times in the captured take; never retrospectively quantize the recording into a different performance without an explicit audition. Measure device input/audio latency and listening feel instead of assuming a universal millisecond guarantee.
+
+MVP musical assistance can be deterministic rules; no cloud model or full-song generation is required. For arbitrary MIDI, ask the user to confirm a proposed tonal context or choose one, and report uncertainty. Audio recordings still require the separately deferred transcription/reference-audio path.
+
+### Persistence and playback boundary
+
+Store generated notes, rests implied by event gaps, patch references and supported automation in the canonical score. Optionally retain normalized gesture samples, brush/rule version, seed, backing revision and authored harmonic regions in a separately versioned sketch document. Define and validate that document before shipping it; do not smuggle arbitrary fields into the existing score schema. Include it in editable packs, while runtime and MIDI need only the compiled notes and supported controls.
+
+Changing the backing or guidance rules must not regenerate kept music silently. Offer “Adapt this take” with an A/B preview and commit the selected result as a new revision. Exact sketch replay needs its original context/version; ordinary song playback never requires recomputing a gesture. MIDI loses brush/gesture editing but retains supported note events; audio renders preserve the chosen sound. Full sketch recovery requires the editable source pack.
+
+Retain two completed scratch passes plus the current bounded pass. Empty passes are not proposed as takes. Keeping a pass freezes its identity and notes; only the explicit Keep action adds a song layer. Handle loop-edge note releases, pointer cancel, lost focus and interruptions without stuck notes or accidental doubled layers. Preserve an interrupted partial take as a clearly incomplete draft. Draft recovery is local storage, not cloud sync.
+
+### Experiments after the first proof
+
+Test lifting/thinning a selected ribbon, motif stamps that adapt an accepted phrase to new harmony, optional answer shadows, a reversible brush for creating gaps, and Calm/Moving/Burst versions. A ribbon uses horizontal time only inside an explicit editing mode; do not silently switch the live pad's activity axis into a timeline. Implement each as an undoable transformation of actual notes with a preview. Continuous bends/timbre gestures require additional supported automation; do not imply existing schema support.
+
+Go/no-go tasks: without theory instruction, can a novice intentionally rise/fall, make the same part busier without speeding up the song, leave a rest, keep the correct pass, recover the previous one, and create two distinguishable phrases? Check that guidance preserves authorship rather than making every gesture sound alike. Test mouse, touch, keyboard alternatives and background/interruption behavior. Advance this direction only if it beats the normal editor for approachability while preserving understandable control.

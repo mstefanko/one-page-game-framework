@@ -3,5 +3,19 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Reusable React editing feature: patterns, piano roll, drums, arrangement, patches and cue audition. Receive host/storage capabilities rather than importing application shells."
+  "description": "Reusable React editing feature: patterns, piano roll, drums, arrangement, patches and cue audition. Receive host/storage capabilities rather than importing application shells.",
+  "exports": {
+    ".": "./src/index.ts",
+    "./preview-bridge": "./src/preview-bridge.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@onepage/asset-library": "*",
+    "@onepage/music-core": "*",
+    "@onepage/music-io": "*",
+    "@onepage/music-web-audio": "*",
+    "@onepage/project": "*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
 }

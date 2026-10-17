@@ -13,11 +13,32 @@
     "packages/*"
   ],
   "scripts": {
-    "check": "node scripts/check-scaffold.mjs",
-    "setup:hooks": "git config --local core.hooksPath .githooks"
+    "dev": "npm run build:player && vite --host 127.0.0.1",
+    "build": "npm run build:player && tsc --noEmit && vite build",
+    "typecheck": "tsc --noEmit",
+    "test": "npm run build:player && vitest run",
+    "test:browser": "playwright test",
+    "check:scaffold": "node scripts/check-scaffold.mjs",
+    "check": "npm run check:scaffold && npm run typecheck && npm test && npm run build",
+    "setup:hooks": "git config --local core.hooksPath .githooks",
+    "build:player": "node scripts/build-player.mjs",
+    "import:terminator": "node scripts/import-terminator.mjs"
   },
   "repository": {
     "type": "git",
     "url": "https://github.com/mstefanko/one-page-game-framework.git"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/node": "26.6.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "beepbox": "4.2.0",
+    "esbuild": "0.28.2",
+    "fake-indexeddb": "6.2.6",
+    "prettier": "3.6.2",
+    "typescript": "7.0.2",
+    "vite": "8.3.4",
+    "vitest": "5.0.5"
   }
 }

@@ -31,7 +31,7 @@ for (const [file, expected] of Object.entries(hashes)) {
 
 // Check current relative Markdown file links. URL availability and anchor targets
 // are deliberately outside this small, network-free scaffold check.
-const ignored = new Set(['.git', 'node_modules', 'archive', 'dist']);
+const ignored = new Set(['.git', 'node_modules', 'archive', 'dist', '.local', 'test-results', 'playwright-report', 'coverage', 'local-games']);
 let documentCount = 0;
 async function checkDocuments(folder) {
   for (const entry of await readdir(folder, { withFileTypes: true })) {

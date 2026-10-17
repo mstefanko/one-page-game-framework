@@ -1,7 +1,7 @@
 # @onepage/music-editor
 
-Reusable React editing feature: patterns, piano roll, drums, arrangement, patches and cue audition. Receive host/storage capabilities rather than importing application shells.
+React Composer, Sketch/Studio, library UI, note/drum/clip controls, live and Arcade capture, and GameAudio preview fixture. Import `@onepage/music-editor/preview-bridge` to instrument a game without importing the React UI.
 
-Status: workspace scaffold only. No executable implementation, public entry point or published package exists yet.
+Functional first slice. Storage is currently wired to the browser adapter; full host capability injection and the generic framework project connection UI are later work.
 
-See [repository boundaries](../../docs/03-repository-and-asset-strategy.md) and [composer implementation gates](../../docs/04-chiptune-composer-plan.md#10-ordered-implementation-work-and-acceptance). Add dependencies and scripts with the first working implementation; do not add a second score format or playback backend.
+See the [current implementation plan](../../docs/06-pocket-score-implementation.md) and [validation limits](../../docs/08-implementation-validation.md). These workspaces remain private source packages, not published npm releases.

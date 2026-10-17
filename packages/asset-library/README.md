@@ -1,7 +1,7 @@
 # @onepage/asset-library
 
-Asset identity, immutable revisions, dependency closure and storage interfaces. Browser/local adapters share contracts; no mandatory cloud service.
+IndexedDB drafts with atomic revision checks, immutable saved versions, recoverable deletion, validated library backup/restore, storage capability helpers and separate demo-project assignments.
 
-Status: workspace scaffold only. No executable implementation, public entry point or published package exists yet.
+Implemented browser adapter. No cloud, filesystem picker integration, or mutable runtime dependency on the personal library.
 
-See [repository boundaries](../../docs/03-repository-and-asset-strategy.md) and [composer implementation gates](../../docs/04-chiptune-composer-plan.md#10-ordered-implementation-work-and-acceptance). Add dependencies and scripts with the first working implementation; do not add a second score format or playback backend.
+See the [current implementation plan](../../docs/06-pocket-score-implementation.md) and [validation limits](../../docs/08-implementation-validation.md). These workspaces remain private source packages, not published npm releases.
