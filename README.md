@@ -10,7 +10,7 @@ A modular toolkit for making small games and creative assets that are useful on 
 2. [Architecture and implementation plan](docs/02-framework-plan.md) — layer contracts, headless runtime, interchangeable sprites, music/SFX, level and cutscene editors, local studio, live tuning, single-file export/recovery, and dependency-ordered milestones. Section 17 preserves the detailed source-linked game anatomy.
 3. [Repository and asset strategy](docs/03-repository-and-asset-strategy.md) — personal GitHub monorepo, standalone tools, package boundaries, distribution, and local shared asset libraries with pinned game dependencies.
 4. [Chiptune composer plan](docs/04-chiptune-composer-plan.md) — library comparison, composing workflows, MIDI conversion, exports, storage, UI states and ordered acceptance gates.
-5. [Copy-paste Claude design prompt](docs/05-claude-design-prompt.md) — five distinct interface concepts with comparable screens and workflows.
+5. [Copy-paste Claude design prompt](docs/05-claude-design-prompt.md) — six distinct interface concepts, including Flowpad: a guided live music scratchpad.
 
 Reference: [play Terminator: Liquid Metal](https://mstefanko.github.io/terminator-game/) · [pinned source](https://github.com/mstefanko/terminator-game/blob/00b2f8b1bdf02f82576ab15e29d9ba7c4f46b7b0/index.html).
 
