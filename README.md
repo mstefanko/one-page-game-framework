@@ -1,8 +1,10 @@
 # One-page game framework
 
-A modular toolkit for making small games and creative assets that are useful on their own. The first planned tool is a chiptune composer: remix a starter, compose your own song, import MIDI, save reusable assets, and export music for games or other content.
+A modular toolkit for making small games and creative assets that are useful on their own. The first tool is Pocket Score, a browser chiptune composer: remix a starter, compose your own song, import MIDI, save reusable assets, and export music for games or other content.
 
-**Status:** research, implementation plans and private npm workspace scaffolding. No composer, game runtime, synth, library service or export pipeline has been implemented or deployed yet.
+**Status:** a working composer with Sketch/Studio, live takes, a playable musical character in Arcade, IndexedDB drafts/versions, MIDI and portable packs, WAV and offline HTML players. Game audio can adapt the actual local Terminator game through an explicit source import; the original Lantern Courier fixture remains available without that import. The full game framework and arbitrary game import remain planned. Source publication does not deploy a composer website.
+
+Start with [the playable composer and real-game plan](docs/14-playable-composer-plan.md), [the original composer implementation plan](docs/06-pocket-score-implementation.md), [validation and remaining gates](docs/08-implementation-validation.md), and [backend proof](docs/07-backend-proof.md).
 
 ## Plans and design handoff
 
@@ -14,22 +16,42 @@ A modular toolkit for making small games and creative assets that are useful on 
 
 Reference: [play Terminator: Liquid Metal](https://mstefanko.github.io/terminator-game/) · [pinned source](https://github.com/mstefanko/terminator-game/blob/00b2f8b1bdf02f82576ab15e29d9ba7c4f46b7b0/index.html).
 
-The repository/library and composer plans specialize the original architecture and prioritize a standalone composer track. Start composer implementation with C1: validated score contracts and a measured backend proof. Game-runtime work retains the original headless and Canvas-versus-LittleJS gates. The reference game remains separate and unchanged.
+The repository/library and composer plans specialize the original architecture and prioritize a standalone composer track. Game-runtime work retains the original headless and Canvas-versus-LittleJS gates. The reference game's original source remains separate and unchanged; its development preview is generated locally.
 
-Track execution in [GitHub milestones](https://github.com/mstefanko/one-page-game-framework/milestones) and [implementation issues](https://github.com/mstefanko/one-page-game-framework/issues). The first composer task is [C1: contracts and backend proof](https://github.com/mstefanko/one-page-game-framework/issues/1), followed by [C2: the audible standalone slice](https://github.com/mstefanko/one-page-game-framework/issues/2). All seven seeded implementation issues are future work.
+Track execution in [GitHub milestones](https://github.com/mstefanko/one-page-game-framework/milestones) and [implementation issues](https://github.com/mstefanko/one-page-game-framework/issues). The first composer task is [C1: contracts and backend proof](https://github.com/mstefanko/one-page-game-framework/issues/1), followed by [C2: the audible standalone slice](https://github.com/mstefanko/one-page-game-framework/issues/2). Implementation now covers parts of C1–C3; issue completion must follow the documented acceptance gates, including device listening.
 
 ## Workspace
 
-`apps/composer` and `apps/studio` are shells for two entry points to the same planned editing features. Shared packages separate project documents, music event compilation, Web Audio playback, editing, import/export, and asset storage. See [package responsibilities](docs/03-repository-and-asset-strategy.md#2-boundaries-and-folder-ownership).
+`apps/composer` hosts the shared React editor. `apps/studio` remains the future framework host for that same editor. Shared packages separate project documents, music event compilation, Web Audio playback, editing, import/export, and asset storage. See [package responsibilities](docs/03-repository-and-asset-strategy.md#2-boundaries-and-folder-ownership).
 
 With Node 24 or newer:
 
 ```sh
 npm ci
 npm run check
+npx playwright install chromium
+npm run test:browser
+npm run dev
 ```
 
-These commands install workspace links and check scaffold metadata, current relative documentation links and archived file hashes. There are no third-party production dependencies or application dev/build commands yet. See [contributor guidance](CONTRIBUTING.md).
+Open the local URL printed by Vite (normally port 4173). `npm run check` checks repository metadata, TypeScript, unit tests and a production build. Browser tests exercise real audio rendering, offline player downloads, editing, persistence and game preview. `npm run build` emits `dist/` with relative asset URLs for a static host, including GitHub Pages under a repository subpath. A backend, account and CDN are not required.
+
+Drafts and saved versions live in IndexedDB on this browser/origin. They are not cloud backups. Download an editable source pack or a library backup from Library; game assignments have their own export. Opening the app on another origin, browser or device creates a separate library. See [contributor guidance](CONTRIBUTING.md).
+
+## Playable composition and the actual game
+
+Arcade's character uses strike, leap, dash and guard to create short phrases from the selected song. Weapon changes select a sound; faster actions increase note density and emphasis at the same song tempo. Kept performances become editable parts in the ordinary score. The [music-theory research](docs/11-arcade-music-theory.md) explains what the phrase generator knows and the limits of its harmony guidance.
+
+To connect your existing local Terminator checkout:
+
+```sh
+npm run import:terminator -- /path/to/terminator-game-repo/index.html
+npm run dev
+```
+
+Open a song, then **Game audio** or **Preview game beside editor**. The project selector offers Terminator and the original fixture. The import generates an instrumented development copy and an editable audio catalog; it does not edit the original game. Generated files are ignored by Git and excluded from `npm run build`, so the public static distribution contains no imported game assets. A fresh checkout can use the original fixture immediately.
+
+See the [Arcade implementation plan](docs/13-arcade-implementation.md), [Terminator integration guide](docs/12-terminator-integration.md), and [integrated execution plan](docs/14-playable-composer-plan.md) for controls, package ownership, acceptance gates and follow-up experiments.
 
 ## Ownership and publication
 

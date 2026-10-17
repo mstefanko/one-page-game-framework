@@ -3,5 +3,13 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "One shared synth and audio-clock scheduler for editor, standalone player, offline rendering and exported games. No editor or MIDI-parser imports."
+  "description": "One shared synth and audio-clock scheduler for editor, standalone player, offline rendering and exported games. No editor or MIDI-parser imports.",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@onepage/project": "*",
+    "@onepage/music-core": "*"
+  }
 }

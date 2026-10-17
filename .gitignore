@@ -10,3 +10,7 @@ test-results/
 *.log
 .local/
 user-library/
+packages/music-io/src/player-runtime.generated.js
+apps/composer/public/THIRD_PARTY_NOTICES.txt
+# Local imported fan-game source, artwork and derived scores are never distributed.
+apps/composer/public/local-games/

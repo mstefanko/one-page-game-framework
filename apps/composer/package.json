@@ -3,5 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Standalone composer shell and onboarding. Mount the shared music-editor with a storage adapter; no game project is required."
+  "description": "Standalone composer shell and onboarding. Mount the shared music-editor with a storage adapter; no game project is required.",
+  "dependencies": {
+    "@onepage/music-editor": "*",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
 }
