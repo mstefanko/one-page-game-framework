@@ -10,6 +10,8 @@ import {
   planStyleChange,
   styleCoverage,
   effectiveCoverage,
+  createBlankScene,
+  planClipTiming,
 } from "./index";
 import type { SceneCommand } from "./types";
 const set = (
@@ -363,4 +365,162 @@ it("requires output layer artwork even when editor visibility is disabled", () =
       (c) => c.familyId === "lantern:foreground",
     )?.ready,
   ).toBe(false);
+});
+
+describe("blank authoring, camera keys and clip timing", () => {
+  it("creates a valid empty scene with a unique identity and no starter dependencies", async () => {
+    const s = createBlankScene();
+    expect(validateScene(s)).toEqual([]);
+    expect(s.id).not.toBe(createBlankScene().id);
+    for (const key of [
+      "actors",
+      "layers",
+      "assets",
+      "media",
+      "motions",
+      "dialogue",
+      "camera",
+      "audio",
+      "locks",
+    ] as const)
+      expect(s[key]).toEqual([]);
+    expect(s.shots).toHaveLength(1);
+    const { importScenePack, exportScenePack } = await import(
+      "../../director-io/src/index"
+    );
+    expect(importScenePack(exportScenePack(s))).toEqual(s);
+  });
+  it("interpolates camera position and optional zoom while preserving legacy constant zoom", async () => {
+    const s = createDemoScene();
+    const next = applyCommands(s, [
+      set("camera", "fromZoom", 1, "camera-arrival"),
+      set("camera", "zoom", 2, "camera-arrival"),
+    ]);
+    expect(evaluateScene(next, 180).camera.zoom).toBe(1.5);
+    expect(evaluateScene(s, 180).camera.zoom).toBe(1);
+    expect(() =>
+      applyCommands(s, [set("camera", "fromZoom", 0, "camera-arrival")]),
+    ).toThrow("camera");
+    const { exportScenePack, importScenePack } = await import(
+      "../../director-io/src/index"
+    );
+    expect(importScenePack(exportScenePack(next)).camera[0].fromZoom).toBe(1);
+  });
+  it("clamps shot-local camera and dialogue tracks and scene-global audio tracks", () => {
+    const s = createDemoScene();
+    s.audio = [
+      {
+        id: "music",
+        kind: "music",
+        title: "Music",
+        start: 0,
+        duration: 120,
+        volume: 0.5,
+      },
+    ];
+    let next = applyCommands(
+      s,
+      planClipTiming(s, "camera", "camera-warning", {
+        start: 500,
+        duration: 120,
+      }),
+    );
+    expect(next.camera[1].start).toBe(300);
+    expect(next.camera[1].duration).toBe(120);
+    next = applyCommands(
+      s,
+      planClipTiming(s, "audio", "music", { start: 2000 }),
+    );
+    expect(next.audio[0].start).toBe(960);
+    next = applyCommands(
+      s,
+      planClipTiming(s, "dialogue", "line-keeper", { start: -50 }),
+    );
+    expect(next.dialogue[1].start).toBe(0);
+    expect(() =>
+      applyCommands(s, [set("audio", "duration", 2000, "music")]),
+    ).toThrow("Audio exceeds");
+  });
+  it("moves a linked action and its line together and stretches the action when the line moves", () => {
+    const s = timingFixture();
+    s.motions[0].endLink = "line-arrival";
+    let next = applyCommands(
+      s,
+      planClipTiming(s, "motion", "courier-arrives", { start: 20 }),
+    );
+    expect(next.motions[0].start).toBe(20);
+    expect(next.dialogue[0].start).toBe(230);
+    expect(next.dialogue[0].duration).toBe(90);
+    next = applyCommands(
+      s,
+      planClipTiming(s, "dialogue", "line-arrival", { start: 250 }),
+    );
+    expect(next.motions[0].duration).toBe(250);
+    expect(next.motions[0].start).toBe(0);
+    expect(next.dialogue[0].start).toBe(250);
+  });
+  it("rejects protected clip timing and clamps a linked endpoint before its line exceeds the shot", () => {
+    const s = timingFixture();
+    s.motions[0].endLink = "line-arrival";
+    const next = applyCommands(
+      s,
+      planClipTiming(s, "motion", "courier-arrives", { duration: 9999 }),
+    );
+    expect(next.motions[0].duration).toBe(270);
+    expect(next.dialogue[0].start + next.dialogue[0].duration).toBe(360);
+    s.locks.push({
+      id: "camera-lock",
+      target: "camera",
+      targetId: "camera-arrival",
+      property: "duration",
+      label: "Camera timing",
+    });
+    expect(() =>
+      planClipTiming(s, "camera", "camera-arrival", { duration: 120 }),
+    ).toThrow("Protected");
+    expect(() =>
+      planClipTiming(s, "camera", "camera-arrival", { start: NaN }),
+    ).toThrow("finite");
+  });
+});
+
+it("keeps a clip starting edge fixed when an oversized duration is clamped", () => {
+  const s = createDemoScene();
+  s.camera[1].start = 100;
+  s.camera[1].duration = 100;
+  const next = applyCommands(
+    s,
+    planClipTiming(s, "camera", "camera-warning", { duration: 999 }),
+  );
+  expect(next.camera[1].start).toBe(100);
+  expect(next.camera[1].duration).toBe(320);
+});
+
+it("authors a standalone title in an empty scene without a fabricated actor", async () => {
+  const s = createBlankScene();
+  const next = applyCommands(s, [
+    set("scene", "dialogue", [
+      {
+        id: "title",
+        shotId: s.shots[0].id,
+        actorId: "",
+        text: "A new story",
+        start: 0,
+        duration: 120,
+        revealRate: 30,
+        waitForInput: false,
+        voiceNeedsReview: false,
+        style: "title",
+      },
+    ]),
+  ]);
+  expect(validateScene(next)).toEqual([]);
+  expect(evaluateScene(next, 60).revealedText).toBe("A new story");
+  const { exportScenePack, importScenePack } = await import(
+    "../../director-io/src/index"
+  );
+  expect(importScenePack(exportScenePack(next)).actors).toEqual([]);
+  expect(() =>
+    applyCommands(next, [set("dialogue", "style", "bubble", "title")]),
+  ).toThrow("speaker");
 });

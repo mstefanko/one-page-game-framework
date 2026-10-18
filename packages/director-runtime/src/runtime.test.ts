@@ -250,3 +250,34 @@ it("separates editor Show from runtime Output", () => {
   renderScene(canvas, scene, 0, { preview: true });
   expect(fills).toBeGreaterThan(outputFills + 20);
 });
+it("renders an empty scene without inventing station layers or actors", () => {
+  const scene = createDemoScene();
+  scene.style = "realistic";
+  scene.layers = [];
+  scene.actors = [];
+  scene.motions = [];
+  scene.dialogue = [];
+  let fills = 0;
+  const context = new Proxy(
+    {},
+    {
+      get(_t, key) {
+        if (key === "fillRect") return () => fills++;
+        return () => {};
+      },
+      set() {
+        return true;
+      },
+    },
+  );
+  renderScene(
+    {
+      width: 256,
+      height: 176,
+      getContext: () => context,
+    } as unknown as HTMLCanvasElement,
+    scene,
+    0,
+  );
+  expect(fills).toBe(1);
+});

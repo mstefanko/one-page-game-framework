@@ -46,3 +46,11 @@ The original standalone fixture measures 23,045 bytes raw / 8,398 bytes gzip in 
 ## Provider references checked
 
 Native subprocess behavior and structured JSON output follow [Claude Code headless documentation](https://code.claude.com/docs/en/headless). Authentication remains in the unmodified installed binary, consistent with [Claude Code authentication and product-use guidance](https://code.claude.com/docs/en/legal-and-compliance). The separate API route uses the user's own key and explicit model selection. Recheck provider terms and capabilities before wider distribution.
+
+## Follow-up editing revision
+
+Addressed the October 18, 18:20 feedback with a bounded responsive preview, wider control panes, visible New scene/recent-scene entry, truly empty documents, retained prompted briefs, basic family placement, actorless titles, accurate stage drag/handles, editable timeline clips and camera framing controls. Style candidates now identify preview state and missing assets directly above the stage. The detailed plan separates camera crop/pan/zoom from the future set-view and actor-direction infrastructure required for other viewing angles.
+
+Camera changes are additive: old camera keys retain constant zoom; new `fromZoom` enables interpolated pushes. Import/export, the standalone player and provider proposal schema share the updated contract. Providers receive explicit instructions to audit available views and report missing art rather than invent perspective transformations. Prompt creation remains dependent on a user-configured native/API connection; no live paid run was performed.
+
+`npm run check` passes after these changes: 160 tests across 17 files in the shared working tree, TypeScript, scaffold/link checks and both production builds. This includes unrelated uncommitted music tests that are preserved outside the Director commit. All 15 Director Chromium checks pass, including the new 1280×800, 1920×1080 and 2560×1440 layouts, exact logical drag deltas, move/resize undo, blank and prompted scene recovery, basic manual authoring, camera interpolation, style preview state and existing offline export/security coverage. A provider-boundary test also accepts a first staged draft against an empty scene with an explicit asset library while preserving the source document.

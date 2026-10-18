@@ -7,6 +7,7 @@ export interface RenderOptions {
   reducedMotion?: boolean;
   preview?: boolean;
   revealDialogue?: boolean;
+  actorPreview?: { id: string; x: number; y: number };
 }
 const images = new Map<string, HTMLImageElement>();
 export async function hydrateSceneMedia(scene: SceneDocument): Promise<void> {
@@ -78,6 +79,14 @@ export function renderScene(
     c.lineTo(a, b);
     c.stroke();
   };
+  if (options.actorPreview) {
+    const preview = options.actorPreview;
+    f.actors = f.actors.map((actor) =>
+      actor.id === preview.id
+        ? { ...actor, x: preview.x, y: preview.y }
+        : actor,
+    );
+  }
   const env = f.environment;
   const day = env.timeOfDay === "day";
   rect(0, 0, w, h, day ? "#677f8e" : "#101b30");
@@ -364,7 +373,19 @@ export function renderScene(
   }
   if (!actorsDrawn) actor();
   c.restore();
-  if (real) {
+  const incompleteStudy =
+    real &&
+    [
+      ...f.actors.map((a) => a.variant),
+      ...scene.layers
+        .filter((l) => (options.preview ? l.visible : l.output))
+        .map((l) =>
+          scene.assets
+            .find((a) => a.id === l.familyId)
+            ?.variants.find((v) => v.style === scene.style),
+        ),
+    ].some((v) => v?.renderKey && !v.ready);
+  if (incompleteStudy) {
     rect(5, 5, 146, 12, "#11232ce6");
     c.fillStyle = "#e3c893";
     c.font = "6px sans-serif";

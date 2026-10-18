@@ -1,6 +1,7 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import {
   createDemoScene,
+  createBlankScene,
   evaluateScene,
   applyCommands,
   createCandidate,
@@ -20,13 +21,12 @@ import type {
   PackManifest,
 } from "@onepage/director-core";
 import {
-  renderScene,
-  hydrateSceneMedia,
   createPlaybackController,
   createAudioHost,
 } from "@onepage/director-runtime";
 import {
   loadDraft,
+  listDraftVersions,
   saveDraft,
   saveAssetPack,
   loadAssetPacks,
@@ -40,6 +40,9 @@ import "./director.css";
 import { FittingRoom } from "./FittingRoom";
 import { ImageImport } from "./ImageImport";
 import { AudioImport } from "./AudioImport";
+import { Stage } from "./Stage";
+import { Timeline } from "./Timeline";
+import { CameraInspector } from "./CameraInspector";
 export interface DirectorProps {
   companion?: {
     status?: string;
@@ -51,103 +54,6 @@ export interface DirectorProps {
     configure?: () => void;
     install?: (scene: SceneDocument) => Promise<{ message: string }>;
   };
-}
-function Stage({
-  scene,
-  tick,
-  selected,
-  guides = false,
-  revealDialogue = false,
-  onSelect,
-  onMove,
-}: {
-  scene: SceneDocument;
-  tick: number;
-  selected?: string;
-  guides?: boolean;
-  revealDialogue?: boolean;
-  onSelect?: (id: string) => void;
-  onMove?: (x: number, y: number, id: string) => void;
-}) {
-  const canvas = useRef<HTMLCanvasElement>(null);
-  const drag = useRef<{ x: number; y: number; id: string } | null>(null);
-  useEffect(() => {
-    if (canvas.current)
-      renderScene(canvas.current, scene, tick, {
-        preview: true,
-        revealDialogue,
-        selectedId: selected,
-        guides,
-      });
-  }, [scene, tick, selected, guides, revealDialogue]);
-  useEffect(() => {
-    let active = true;
-    void hydrateSceneMedia(scene).then(() => {
-      if (active && canvas.current)
-        renderScene(canvas.current, scene, tick, {
-          preview: true,
-          revealDialogue,
-          selectedId: selected,
-          guides,
-        });
-    });
-    return () => {
-      active = false;
-    };
-  }, [scene]);
-  return (
-    <canvas
-      ref={canvas}
-      width={scene.width}
-      height={scene.height}
-      aria-label="Scene preview; drag the selected actor to move its starting pose"
-      tabIndex={0}
-      onPointerDown={(e) => {
-        const r = e.currentTarget.getBoundingClientRect();
-        const frame = evaluateScene(scene, tick);
-        const x =
-          (((e.clientX - r.left) / r.width) * scene.width - scene.width / 2) /
-            frame.camera.zoom +
-          frame.camera.x;
-        const y =
-          (((e.clientY - r.top) / r.height) * scene.height - scene.height / 2) /
-            frame.camera.zoom +
-          frame.camera.y;
-        const a = [...frame.actors].sort(
-          (a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y),
-        )[0];
-        if (a) onSelect?.(a.id);
-        drag.current = a ? { x: e.clientX, y: e.clientY, id: a.id } : null;
-        e.currentTarget.setPointerCapture(e.pointerId);
-      }}
-      onPointerUp={(e) => {
-        if (
-          drag.current &&
-          onMove &&
-          Math.hypot(e.clientX - drag.current.x, e.clientY - drag.current.y) > 5
-        ) {
-          const r = e.currentTarget.getBoundingClientRect();
-          const camera = evaluateScene(scene, tick).camera;
-          onMove(
-            Math.round(
-              (((e.clientX - r.left) / r.width) * scene.width -
-                scene.width / 2) /
-                camera.zoom +
-                camera.x,
-            ),
-            Math.round(
-              (((e.clientY - r.top) / r.height) * scene.height -
-                scene.height / 2) /
-                camera.zoom +
-                camera.y,
-            ),
-            drag.current.id,
-          );
-        }
-        drag.current = null;
-      }}
-    />
-  );
 }
 export function Director({ companion }: DirectorProps) {
   const [scene, setScene] = useState(createDemoScene);
@@ -181,6 +87,10 @@ export function Director({ companion }: DirectorProps) {
   const [prompt, setPrompt] = useState("");
   const [busy, setBusy] = useState(false);
   const [modal, setModal] = useState("");
+  const [newTitle, setNewTitle] = useState("Untitled scene");
+  const [newBrief, setNewBrief] = useState("");
+  const [useStarterAssets, setUseStarterAssets] = useState(true);
+  const [recentScenes, setRecentScenes] = useState<SceneDocument[]>([]);
   const [pendingPack, setPendingPack] = useState<PackManifest | null>(null);
   const [libraryPacks, setLibraryPacks] = useState<PackManifest[]>([]);
   const [selectedFamilies, setSelectedFamilies] = useState<string[]>([]);
@@ -195,7 +105,12 @@ export function Director({ companion }: DirectorProps) {
   const shot =
     scene.shots.find((s) => tick >= s.start && tick < s.start + s.duration) ??
     scene.shots[0];
-  const actor = scene.actors.find((a) => a.id === selected) ?? scene.actors[0];
+  const selectedMotion = scene.motions.find((m) => m.id === selected);
+  const actor =
+    scene.actors.find((a) => a.id === (selectedMotion?.actorId ?? selected)) ??
+    scene.actors[0];
+  const inspectingCamera =
+    selected === "camera" || scene.camera.some((c) => c.id === selected);
   const layer = scene.layers.find((a) => a.id === selected);
   const line =
     scene.dialogue.find((d) => d.id === selected) ??
@@ -223,6 +138,50 @@ export function Director({ companion }: DirectorProps) {
   async function retainPack(pack: PackManifest) {
     await saveAssetPack(pack);
     setLibraryPacks(await loadAssetPacks());
+  }
+  async function openNewScene() {
+    setModal("New scene");
+    try {
+      await saveDraft(scene);
+      const versions = await listDraftVersions();
+      const latest = new Map<string, SceneDocument>();
+      for (const version of versions) {
+        if (
+          !latest.has(version.id) ||
+          latest.get(version.id)!.revision < version.revision
+        )
+          latest.set(version.id, version);
+      }
+      setRecentScenes([...latest.values()].reverse());
+    } catch (e) {
+      setNotice(`Could not save current scene: ${String(e)}`);
+    }
+  }
+  async function startScene(mode: "blank" | "prompt" | "example") {
+    try {
+      await saveDraft(scene);
+      const next = mode === "example" ? createDemoScene() : createBlankScene();
+      next.id = `scene:${crypto.randomUUID()}`;
+      if (mode !== "example") {
+        next.title = newTitle.trim() || "Untitled scene";
+        next.brief = newBrief;
+        if (mode === "prompt" && useStarterAssets) {
+          const starter = createDemoScene();
+          next.assets = starter.assets;
+          next.media = starter.media;
+        }
+      }
+      replaceDocument(next);
+      setTick(0);
+      setSelected("");
+      setModal("");
+      setWorkspace(mode === "prompt" ? "Direct" : "Edit");
+      setDock("Direction");
+      setPrompt(newBrief);
+      if (mode === "prompt") await run(next, newBrief);
+    } catch (e) {
+      setNotice(`Could not start scene: ${String(e)}`);
+    }
   }
   function moveStartingPose(id: string, x: number, y: number) {
     const motion = scene.motions.find(
@@ -328,8 +287,17 @@ export function Director({ companion }: DirectorProps) {
     return () => cancelAnimationFrame(frame);
   }, [playing]);
   function replaceDocument(next: SceneDocument) {
+    try {
+      next = importScenePack(JSON.stringify(next));
+    } catch (error) {
+      setNotice(`Edit rejected: ${String(error)}`);
+      return;
+    }
     setUndo((u) => [...u, scene]);
-    setScene({ ...next, revision: scene.revision + 1 });
+    setScene({
+      ...next,
+      revision: Math.max(scene.revision, next.revision) + 1,
+    });
     setCandidate(null);
     setResolutions({});
     runGeneration.current++;
@@ -418,7 +386,7 @@ export function Director({ companion }: DirectorProps) {
       setNotice(`Import rejected: ${String(e)}`);
     }
   }
-  async function run() {
+  async function run(source = scene, direction = prompt) {
     if (!companion?.run) {
       if (companion?.configure) companion.configure();
       else setModal("Connection");
@@ -429,7 +397,7 @@ export function Director({ companion }: DirectorProps) {
     abort.current = new AbortController();
     const signal = abort.current.signal;
     try {
-      const result = await companion.run(scene, prompt, signal);
+      const result = await companion.run(source, direction, signal);
       if (signal.aborted || generation !== runGeneration.current) return;
       setCandidate(result);
       setResolutions({});
@@ -442,7 +410,15 @@ export function Director({ companion }: DirectorProps) {
     }
   }
   return (
-    <div className="pd">
+    <div
+      className="pd"
+      style={
+        {
+          "--stage-ratio": scene.width / scene.height,
+          "--stage-reserve": expanded ? "610px" : "360px",
+        } as CSSProperties
+      }
+    >
       <header className="pd-header">
         <strong className="pd-brand">
           <i />
@@ -462,6 +438,7 @@ export function Director({ companion }: DirectorProps) {
           ))}
         </nav>
         <span className="pd-spacer" />
+        <button onClick={() => void openNewScene()}>＋ New scene</button>
         <button onClick={() => setModal("Settings")} aria-label="Settings">
           ⚙
         </button>
@@ -511,6 +488,15 @@ export function Director({ companion }: DirectorProps) {
               </span>
             </button>
           ))}
+          <button
+            className="pd-wide"
+            onClick={() => {
+              setSelected("camera");
+              setDock("Inspect");
+            }}
+          >
+            ▣ Camera & framing
+          </button>
           <div className="pd-section-title">
             LAYERS <span>click to inspect</span>
           </div>
@@ -550,6 +536,34 @@ export function Director({ companion }: DirectorProps) {
             }}
           >
             ＋ Add shot
+          </button>
+          <button
+            className="pd-wide"
+            onClick={() => {
+              const id = `title:${crypto.randomUUID()}`;
+              replaceDocument({
+                ...scene,
+                dialogue: [
+                  ...scene.dialogue,
+                  {
+                    id,
+                    actorId: "",
+                    shotId: shot.id,
+                    text: "Your title",
+                    start: 0,
+                    duration: shot.duration,
+                    revealRate: 28,
+                    waitForInput: false,
+                    voiceNeedsReview: false,
+                    style: "title",
+                  },
+                ],
+              });
+              setSelected(id);
+              setDock("Inspect");
+            }}
+          >
+            ＋ Title card
           </button>
           <button className="pd-library" onClick={() => setWorkspace("Assets")}>
             ▦ Browse asset library
@@ -628,6 +642,22 @@ export function Director({ companion }: DirectorProps) {
                   )}
                 </div>
               )}
+              <button
+                onClick={() => {
+                  const starter = createDemoScene();
+                  replaceDocument({
+                    ...scene,
+                    assets: [
+                      ...scene.assets,
+                      ...starter.assets.filter(
+                        (a) => !scene.assets.some((x) => x.id === a.id),
+                      ),
+                    ],
+                  });
+                }}
+              >
+                Add starter library
+              </button>
               <div className="pd-assets">
                 {scene.assets
                   .filter((a) =>
@@ -657,6 +687,72 @@ export function Director({ companion }: DirectorProps) {
                       <p className="pd-muted">
                         {a.source} · {a.license}
                       </p>
+                      {a.kind === "character" && (
+                        <button
+                          onClick={() => {
+                            const id = `actor:${crypto.randomUUID()}`;
+                            replaceDocument({
+                              ...scene,
+                              actors: [
+                                ...scene.actors,
+                                {
+                                  id,
+                                  name: a.name,
+                                  familyId: a.id,
+                                  x: scene.width / 2,
+                                  y: scene.height * 0.75,
+                                  scale: 1,
+                                },
+                              ],
+                            });
+                            setSelected(id);
+                            setWorkspace("Edit");
+                            setDock("Inspect");
+                          }}
+                        >
+                          Add character to stage
+                        </button>
+                      )}
+                      {(a.kind === "set" || a.kind === "prop") && (
+                        <button
+                          onClick={() => {
+                            const id = `layer:${crypto.randomUUID()}`;
+                            const starter = createDemoScene();
+                            const originals = starter.layers.filter(
+                              (l) => l.familyId === a.id,
+                            );
+                            replaceDocument({
+                              ...scene,
+                              layers: [
+                                ...scene.layers,
+                                ...(originals.length
+                                  ? originals.map((l) => ({
+                                      ...l,
+                                      id: `layer:${crypto.randomUUID()}`,
+                                    }))
+                                  : [
+                                      {
+                                        id,
+                                        name: a.name,
+                                        kind: "facade" as const,
+                                        x: 0,
+                                        y: 0,
+                                        z: 0,
+                                        visible: true,
+                                        output: true,
+                                        opacity: 1,
+                                        familyId: a.id,
+                                      },
+                                    ]),
+                              ],
+                            });
+                            setWorkspace("Edit");
+                            setDock("Inspect");
+                          }}
+                        >
+                          Add to set
+                        </button>
+                      )}
                       <details>
                         <summary>Capabilities & provenance</summary>
                         {a.variants.map((v) => (
@@ -731,7 +827,26 @@ export function Director({ companion }: DirectorProps) {
                 <select
                   aria-label="Stage operation"
                   value={operation}
-                  onChange={(e) => setOperation(e.target.value)}
+                  onChange={(e) => {
+                    setOperation(e.target.value);
+                    setPlaying(false);
+                    const motion =
+                      selectedMotion ??
+                      scene.motions.find(
+                        (m) => m.actorId === selected && m.shotId === shot.id,
+                      );
+                    if (motion)
+                      setTick(
+                        Math.min(
+                          shot.start + shot.duration - 1,
+                          shot.start +
+                            motion.start +
+                            (e.target.value === "Action endpoint"
+                              ? motion.duration
+                              : 0),
+                        ),
+                      );
+                  }}
                 >
                   <option>Starting pose</option>
                   <option>Action endpoint</option>
@@ -740,12 +855,19 @@ export function Director({ companion }: DirectorProps) {
                 <label>
                   Look{" "}
                   <select
-                    value={scene.style}
+                    value={preview.style}
                     onChange={(e) => proposeStyle(e.target.value as StyleId)}
                   >
-                    <option>8-bit</option>
-                    <option>16-bit</option>
-                    <option>realistic</option>
+                    {(["8-bit", "16-bit", "realistic"] as StyleId[]).map(
+                      (style) => (
+                        <option key={style} value={style}>
+                          {style} ·{" "}
+                          {styleCoverage(scene, style).every((c) => c.ready)
+                            ? "ready to preview"
+                            : "missing assets"}
+                        </option>
+                      ),
+                    )}
                   </select>
                 </label>
                 <label>
@@ -762,6 +884,31 @@ export function Director({ companion }: DirectorProps) {
                   </select>
                 </label>
               </div>
+              {candidate && (
+                <div className="pd-preview-banner" role="status">
+                  <b>Preview only · {preview.style}</b>
+                  <span>
+                    {missingCoverage.length
+                      ? `${missingCoverage.length} asset families need preparation. Current scene stays unchanged.`
+                      : "Compare below, then Keep revision in Changes to apply."}
+                  </span>
+                  <button onClick={() => setDock("Changes")}>
+                    Review changes →
+                  </button>
+                </div>
+              )}
+              {!scene.actors.length && !scene.layers.length && (
+                <div className="pd-empty-stage">
+                  <b>Your empty stage</b>
+                  <span>
+                    Import a pack or add starter pieces in Assets, or describe
+                    your scene in Direction.
+                  </span>
+                  <button onClick={() => setWorkspace("Assets")}>
+                    Add assets
+                  </button>
+                </div>
+              )}
               <div
                 className={`pd-stage ${candidate ? "comparing" : ""} ${scene.style !== "realistic" ? "pd-pixel" : ""}`}
               >
@@ -778,61 +925,43 @@ export function Director({ companion }: DirectorProps) {
                 <div className="pd-stage-pane">
                   {candidate && <span>Candidate · {candidate.name}</span>}
                   <Stage
+                    operation={operation as "Starting pose" | "Action endpoint"}
                     scene={preview}
                     tick={tick}
                     revealDialogue={revealed}
                     selected={selected}
                     guides={guides}
-                    onSelect={setSelected}
+                    onSelect={(id) => {
+                      if (!selectedMotion || selectedMotion.actorId !== id)
+                        setSelected(id);
+                      setPlaying(false);
+                    }}
                     onMove={
-                      workspace === "Edit" && actor
+                      !candidate
                         ? (x, y, id) => {
-                            const motion = scene.motions.find(
-                              (m) => m.actorId === id && m.shotId === shot.id,
-                            );
-                            if (operation === "Action endpoint") {
-                              if (motion)
-                                commit([
-                                  {
-                                    type: "set",
-                                    target: "motion",
-                                    targetId: motion.id,
-                                    property: "to",
-                                    value: { x, y },
-                                  },
-                                ]);
-                              else
-                                setNotice(
-                                  "This actor has no action in this shot. Choose Starting pose.",
-                                );
-                            } else
+                            const motion =
+                              scene.motions.find((m) => m.id === id) ??
+                              scene.motions.find(
+                                (m) => m.actorId === id && m.shotId === shot.id,
+                              );
+                            if (motion) {
                               commit([
                                 {
                                   type: "set",
-                                  target: "actor",
-                                  targetId: id,
-                                  property: "x",
-                                  value: x,
+                                  target: "motion",
+                                  targetId: motion.id,
+                                  property:
+                                    operation === "Action endpoint"
+                                      ? "to"
+                                      : "from",
+                                  value: { x, y },
                                 },
-                                {
-                                  type: "set",
-                                  target: "actor",
-                                  targetId: id,
-                                  property: "y",
-                                  value: y,
-                                },
-                                ...(motion
-                                  ? [
-                                      {
-                                        type: "set" as const,
-                                        target: "motion" as const,
-                                        targetId: motion.id,
-                                        property: "from",
-                                        value: { x, y },
-                                      },
-                                    ]
-                                  : []),
                               ]);
+                            } else if (operation === "Action endpoint")
+                              setNotice(
+                                "No motion in this shot. Add a Walk action in the inspector first.",
+                              );
+                            else moveStartingPose(id, x, y);
                           }
                         : undefined
                     }
@@ -891,57 +1020,32 @@ export function Director({ companion }: DirectorProps) {
                 </button>
               </div>
               {expanded && (
-                <div className="pd-timeline">
-                  <div className="pd-ruler">
-                    <b>TRACKS</b>
-                    {Array.from({ length: 7 }, (_, i) => (
-                      <span key={i}>{((duration / 360) * i).toFixed(0)}s</span>
-                    ))}
-                  </div>
-                  {[
-                    { name: "Motion", items: scene.motions },
-                    { name: "Dialogue", items: scene.dialogue },
-                    { name: "Camera", items: scene.camera },
-                    { name: "Sound & ambience", items: scene.audio },
-                  ].map((group) => (
-                    <div className="pd-track" key={group.name}>
-                      <b>{group.name}</b>
-                      <div>
-                        {group.items.map((item) => (
-                          <button
-                            key={item.id}
-                            style={{
-                              left: `${((item.start + ("shotId" in item ? (scene.shots.find((s) => s.id === item.shotId)?.start ?? 0) : 0)) / duration) * 100}%`,
-                              width: `${Math.max(3, (item.duration / duration) * 100)}%`,
-                            }}
-                            onClick={() => {
-                              setTick(
-                                item.start +
-                                  ("shotId" in item
-                                    ? (scene.shots.find(
-                                        (s) => s.id === item.shotId,
-                                      )?.start ?? 0)
-                                    : 0),
-                              );
-                              setSelected(item.id);
-                              setDock("Inspect");
-                            }}
-                            title={"text" in item ? item.text : group.name}
-                          >
-                            {"text" in item
-                              ? item.text
-                              : "action" in item
-                                ? item.action
-                                : "title" in item
-                                  ? item.title
-                                  : group.name}
-                          </button>
-                        ))}
-                        <i style={{ left: `${(tick / duration) * 100}%` }} />
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                <Timeline
+                  allowProtected={override}
+                  scene={scene}
+                  tick={tick}
+                  selected={selected}
+                  onCommit={commit}
+                  onSelect={(id, time) => {
+                    setPlaying(false);
+                    setTick(time);
+                    setSelected(id);
+                    setDock("Inspect");
+                    const motion = scene.motions.find((m) => m.id === id);
+                    if (motion) {
+                      setOperation("Action endpoint");
+                      const owner = scene.shots.find(
+                        (s) => s.id === motion.shotId,
+                      )!;
+                      setTick(
+                        Math.min(
+                          owner.start + owner.duration - 1,
+                          time + motion.duration,
+                        ),
+                      );
+                    }
+                  }}
+                />
               )}
             </>
           )}
@@ -986,7 +1090,7 @@ export function Director({ companion }: DirectorProps) {
               <button
                 className="pd-primary pd-wide"
                 disabled={busy || !prompt.trim()}
-                onClick={run}
+                onClick={() => void run()}
               >
                 {busy ? "Preparing candidate…" : "Create candidate ↗"}
               </button>
@@ -1022,11 +1126,16 @@ export function Director({ companion }: DirectorProps) {
               <label>
                 Appearance
                 <select
-                  value={scene.style}
+                  value={preview.style}
                   onChange={(e) => proposeStyle(e.target.value as StyleId)}
                 >
                   {["8-bit", "16-bit", "realistic"].map((s) => (
-                    <option key={s}>{s}</option>
+                    <option key={s} value={s}>
+                      {s} ·{" "}
+                      {styleCoverage(scene, s as StyleId).every((c) => c.ready)
+                        ? "ready to preview"
+                        : "missing assets"}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -1113,6 +1222,25 @@ export function Director({ companion }: DirectorProps) {
                 ↑ Move shot earlier
               </button>
               <hr />
+              {inspectingCamera && (
+                <CameraInspector
+                  allowProtected={override}
+                  onError={setNotice}
+                  scene={scene}
+                  shot={shot}
+                  selected={selected}
+                  onCommit={commit}
+                  onSelect={setSelected}
+                  onSeek={(time) => {
+                    setPlaying(false);
+                    setTick(time);
+                  }}
+                  onDirection={(text) => {
+                    setPrompt(text);
+                    setDock("Direction");
+                  }}
+                />
+              )}
               <small className="pd-eyebrow">INSTANCE INSPECTOR</small>
               <h2>{layer?.name ?? actor?.name ?? "Scene"}</h2>
               <p className="pd-muted">Changes apply to this scene instance.</p>
@@ -1199,6 +1327,7 @@ export function Director({ companion }: DirectorProps) {
                   </label>
                 </>
               ) : (
+                !inspectingCamera &&
                 actor && (
                   <>
                     <label>
@@ -1281,12 +1410,78 @@ export function Director({ companion }: DirectorProps) {
                         }
                       />
                     </label>
+                    <button
+                      onClick={() => {
+                        const id = `motion:${crypto.randomUUID()}`;
+                        replaceDocument({
+                          ...scene,
+                          motions: [
+                            ...scene.motions,
+                            {
+                              id,
+                              actorId: actor.id,
+                              shotId: shot.id,
+                              action: "walk",
+                              start: 0,
+                              duration: Math.min(120, shot.duration),
+                              from: { x: actor.x, y: actor.y },
+                              to: { x: actor.x + 30, y: actor.y },
+                              ease: "linear",
+                            },
+                          ],
+                        });
+                        setSelected(id);
+                        setOperation("Action endpoint");
+                      }}
+                    >
+                      ＋ Walk action
+                    </button>
+                    <button
+                      onClick={() => {
+                        const id = `line:${crypto.randomUUID()}`;
+                        replaceDocument({
+                          ...scene,
+                          dialogue: [
+                            ...scene.dialogue,
+                            {
+                              id,
+                              actorId: actor.id,
+                              shotId: shot.id,
+                              text: "Your line here",
+                              start: 0,
+                              duration: shot.duration,
+                              revealRate: 28,
+                              waitForInput: true,
+                              voiceNeedsReview: false,
+                              style: "bubble",
+                            },
+                          ],
+                        });
+                        setSelected(id);
+                      }}
+                    >
+                      ＋ Dialogue
+                    </button>
                     {scene.motions
                       .filter(
                         (m) => m.actorId === actor.id && m.shotId === shot?.id,
                       )
                       .map((m) => (
                         <div key={m.id}>
+                          <button
+                            onClick={() => {
+                              setSelected(m.id);
+                              setOperation("Action endpoint");
+                              setTick(
+                                Math.min(
+                                  shot.start + shot.duration - 1,
+                                  shot.start + m.start + m.duration,
+                                ),
+                              );
+                            }}
+                          >
+                            {m.action} · select endpoint
+                          </button>
                           <label>
                             Motion start (seconds in shot)
                             <input
@@ -1330,6 +1525,19 @@ export function Director({ companion }: DirectorProps) {
                                 setValue("motion", m.id, "to", {
                                   ...m.to,
                                   x: +e.target.value,
+                                })
+                              }
+                            />
+                          </label>
+                          <label>
+                            Action endpoint Y
+                            <input
+                              type="number"
+                              value={m.to.y}
+                              onChange={(e) =>
+                                setValue("motion", m.id, "to", {
+                                  ...m.to,
+                                  y: +e.target.value,
                                 })
                               }
                             />
@@ -1907,6 +2115,74 @@ export function Director({ companion }: DirectorProps) {
                   pack; it does not add scene playback to arbitrary game code.
                 </p>
               </>
+            ) : modal === "New scene" ? (
+              <>
+                <p>
+                  Start an empty stage, describe a first draft, or open the
+                  example. Your current scene is saved in Recent scenes.
+                </p>
+                <label>
+                  New scene title
+                  <input
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                  />
+                </label>
+                <label>
+                  Scene brief
+                  <textarea
+                    value={newBrief}
+                    onChange={(e) => setNewBrief(e.target.value)}
+                    placeholder="Who appears, where, what happens, visual style and camera framing…"
+                  />
+                </label>
+                <label className="pd-check">
+                  <input
+                    type="checkbox"
+                    checked={useStarterAssets}
+                    onChange={(e) => setUseStarterAssets(e.target.checked)}
+                  />{" "}
+                  Offer starter asset library to the agent
+                </label>
+                <div className="pd-new-actions">
+                  <button
+                    className="pd-primary"
+                    onClick={() => void startScene("blank")}
+                  >
+                    Start blank scene
+                  </button>
+                  <button
+                    disabled={!newBrief.trim()}
+                    onClick={() => void startScene("prompt")}
+                  >
+                    Create from prompt
+                  </button>
+                  <button onClick={() => void startScene("example")}>
+                    Open station example
+                  </button>
+                </div>
+                <p className="pd-muted">
+                  Prompt creation uses your connected agent. If disconnected,
+                  your brief is kept in the new scene and connection setup
+                  opens. An agent can arrange available assets; it cannot invent
+                  missing artwork.
+                </p>
+                <h3>Recent scenes</h3>
+                {recentScenes.map((saved) => (
+                  <button
+                    className="pd-wide"
+                    key={saved.id}
+                    onClick={() => {
+                      replaceDocument(saved);
+                      setTick(0);
+                      setSelected("");
+                      setModal("");
+                    }}
+                  >
+                    {saved.title} · revision {saved.revision}
+                  </button>
+                ))}
+              </>
             ) : modal === "Connection" ? (
               <>
                 <p>{companion?.status ?? "No local agent is connected."}</p>
@@ -1947,44 +2223,11 @@ export function Director({ companion }: DirectorProps) {
                     }
                   />
                 </label>
-                <button
-                  onClick={() => {
-                    if (
-                      !window.confirm(
-                        "Start a fresh scene? Export a backup first if you need a portable copy. Your previous draft remains available in Undo.",
-                      )
-                    )
-                      return;
-                    const starter = createDemoScene();
-                    replaceDocument({
-                      ...starter,
-                      id: `scene:${crypto.randomUUID()}`,
-                      title: "Untitled scene",
-                      brief: "Describe your story here.",
-                      shots: [
-                        {
-                          id: "shot:opening",
-                          name: "Opening",
-                          start: 0,
-                          duration: 300,
-                        },
-                      ],
-                      motions: [],
-                      dialogue: [],
-                      camera: [],
-                      audio: [],
-                      locks: [],
-                    });
-                    setTick(0);
-                    setModal("");
-                    setWorkspace("Edit");
-                  }}
-                >
+                <button onClick={() => void openNewScene()}>
                   Start a fresh scene
                 </button>
                 <p className="pd-muted">
-                  Fresh scenes keep the original cast and set for staging. Undo
-                  restores your previous draft.
+                  Blank stage, prompt, example and recent scenes.
                 </p>
                 <h3>Storage & services</h3>
                 {companion?.configure && (

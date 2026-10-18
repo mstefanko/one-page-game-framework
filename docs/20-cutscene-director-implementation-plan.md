@@ -346,3 +346,26 @@ Commit canonical contract/package foundation first. Parallel workers own core, e
 ### Implemented release evidence
 
 The supervised Sol 6.1 implementation now lives in `apps/director` and five `director-*` packages. [Delivery evidence](26-director-delivery.md) lists working flows, checks and remaining requirements; [the quickstart](../apps/director/README.md) documents browser/manual, native Claude/API, CLI, packs and registry usage. Actual asset imports and standalone outputs are implemented, while image generation, finished realistic artwork, advanced keyframe editing, Pocket Score round trips and engine-specific trigger adapters remain explicit follow-up gates.
+
+## Editing feedback revision — October 18, 18:20 review
+
+The editor must treat output resolution, preview magnification and camera framing as three separate concepts. Output remains a logical scene size. The preview fits its available space with a 768 × 528 CSS-pixel ceiling and reserves room for timeline controls; wider displays expand the navigator and inspector. Collapsing the timeline releases preview height. Camera pan/zoom changes the rendered composition and exported playback; resizing the browser does not.
+
+### Implemented interaction corrections
+
+- A persistent **New scene** entry opens blank, prompted, example and recent-scene routes. A blank scene contains one shot and no hidden station cast, set, motions or audio. Save the outgoing scene before switching; saved versions remain available after reopening. Prompt creation preserves the brief when agent connection setup is required. Starter assets are an explicit prompt option, not a forced scene.
+- Empty scenes can add starter or imported families, place characters/set layers, add a walk, dialogue or an actorless title card. Advanced layer authoring and a generic motion recipe library remain later work.
+- Extract stage interaction from the editor shell. Convert CSS pointer coordinates through the evaluated camera into logical scene coordinates. Hit-test actual sprite bounds, retain the grab offset, preview a drag live, cancel safely and commit once. Selected motion IDs resolve their actual actor. Start and endpoint handles are separate from the playback pose; selecting a motion opens its endpoint for placement. Background clicks do not select an arbitrary nearest actor.
+- Timeline clips move and resize by frame, constrained to their owning shot; audio uses global scene time. Motion, dialogue and camera inspectors expose numeric controls, and keyboard arrows adjust timing. Linked motion/dialogue timing validates as one transaction. Drag cancellation leaves the document alone; undo restores the entire timing edit.
+- Look choices identify ready versus missing content. Preview banners distinguish candidate from saved appearance, and Changes keeps/discards the candidate explicitly. Missing realistic pieces remain visible as preparation requirements and block acceptance/export as before. Look switching does not manufacture new assets.
+- Every shot exposes **Camera & framing**, with wide, close, pan and push-in presets, numeric start/end centers and zoom, timing and start/end preview. Optional `CameraKey.fromZoom` interpolates to `zoom`; omitted values preserve older constant-zoom behavior. Camera/audio edits use the same validated command and preservation-lock path as other edits.
+
+### Camera angles and asset views: next architectural slice
+
+Do not add a cosmetic “angle” slider to a flat 2D renderer. A 2D pan changes the crop; it cannot expose hidden faces or create reverse-angle sprites. The current inspector provides an agent direction entry for planning another view and clearly states this boundary.
+
+Before implementing actual angle swaps, extend family variants with a separate `viewId` contract (side, front, back, three-quarter, overhead; custom IDs allowed). Keep this independent of `style` and weather. A layered set view should declare its logical ground plane, usable stage region, named blocking markers, occlusion/depth order and compatible actor facing/view slots. Use explicit 2D/2.5D projection metadata only when the renderer supports it; do not infer geometry from a background image.
+
+The agent workflow is: preserve story/timing → inventory set views and actor directions → propose view-specific blocking/camera → list missing layers/animation directions → import or prepare only those dependencies → validate sockets, floor contact and occlusion → compare the same story beat → keep as one revision. A reverse shot is generally another shot with different set/actor view bindings, not a rotation of the original bitmap. Cross-view placement uses named semantic markers (door, platform edge, keeper position), not reused raw pixels. Missing views need a preparation state; an existing ready view remains instant and reversible.
+
+Acceptance for that future slice requires at least two genuinely different views of the same set, actors with matching directions and walk/talk clips, consistent anchors across styles, deterministic view/variant resolution, missing-view diagnostics, pinned dependency export, and a before/after comparison proving that dialogue, outcomes and timings survive. No generated-perspective or 3D orbit capability is claimed in this revision.

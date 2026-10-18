@@ -285,3 +285,44 @@ export function createDemoScene(): SceneDocument {
     },
   };
 }
+
+/** An authored scene begins without starter content, asset dependencies, or protection locks. */
+export function createBlankScene(): SceneDocument {
+  return {
+    schemaVersion: 1,
+    id: "scene-" + globalThis.crypto.randomUUID(),
+    revision: 1,
+    title: "Untitled scene",
+    width: 256,
+    height: 176,
+    fps: 60,
+    style: "8-bit",
+    brief: "",
+    shots: [{ id: "shot-1", name: "Shot 1", start: 0, duration: 360 }],
+    actors: [],
+    layers: [],
+    motions: [],
+    dialogue: [],
+    camera: [],
+    audio: [],
+    assets: [],
+    media: [],
+    locks: [],
+    environment: {
+      weather: "clear",
+      timeOfDay: "day",
+      frontRain: 0,
+      backRain: 0,
+      lantern: 0,
+      wetness: 0,
+      ambience: false,
+      abandoned: false,
+    },
+    slot: {
+      id: "opening",
+      name: "Opening scene",
+      onComplete: "game:start",
+      onSkip: "game:start",
+    },
+  };
+}

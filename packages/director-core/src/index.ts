@@ -1,5 +1,5 @@
 export * from "./types";
-export { createDemoScene } from "./fixture";
+export { createDemoScene, createBlankScene } from "./fixture";
 import type {
   SceneDocument,
   SceneCommand,
@@ -21,6 +21,8 @@ const targets = {
   motion: "motions",
   dialogue: "dialogue",
   shot: "shots",
+  camera: "camera",
+  audio: "audio",
 } as const;
 const fields: Record<string, string[]> = {
   scene: ["title", "brief", "style"],
@@ -47,6 +49,8 @@ const fields: Record<string, string[]> = {
     "voiceNeedsReview",
     "style",
   ],
+  camera: ["start", "duration", "from", "to", "zoom", "fromZoom"],
+  audio: ["start", "duration", "mediaId", "title", "volume", "kind"],
   shot: ["name", "start", "duration", "environment"],
   environment: [
     "weather",
@@ -361,7 +365,8 @@ function validateSceneInternal(s: SceneDocument): Diagnostic[] {
       !["bubble", "caption", "portrait", "title"].includes(l.style)
     )
       err("dialogue", "Invalid dialogue presentation", l.id);
-    if (!actor(l.actorId)) err("actor-reference", "Unknown speaker", l.id);
+    if (!(l.style === "title" && l.actorId === "") && !actor(l.actorId))
+      err("actor-reference", "Unknown speaker", l.id);
     if (
       typeof l.text !== "string" ||
       !finite(l.revealRate) ||
@@ -374,10 +379,17 @@ function validateSceneInternal(s: SceneDocument): Diagnostic[] {
   for (const c of s.camera)
     if (
       ![c.from.x, c.from.y, c.to.x, c.to.y, c.zoom].every(finite) ||
-      c.zoom <= 0
+      c.zoom <= 0 ||
+      c.zoom > 16 ||
+      (c.fromZoom !== undefined &&
+        (!finite(c.fromZoom) || c.fromZoom <= 0 || c.fromZoom > 16))
     )
       err("camera", "Invalid camera transform", c.id);
   for (const a of s.audio) {
+    if (a.start + a.duration > sceneDuration(s))
+      err("audio-bounds", "Audio exceeds scene duration", a.id);
+    if (!["music", "voice", "sfx", "ambience"].includes(a.kind))
+      err("audio", "Unknown audio kind", a.id);
     if (!finite(a.volume) || a.volume < 0 || a.volume > 1)
       err("audio", "Invalid audio volume", a.id);
     if (a.mediaId && !s.media.some((m) => m.id === a.mediaId))
@@ -596,7 +608,7 @@ export function evaluateScene(s: SceneDocument, tick: number): EvaluatedFrame {
       ? {
           x: c.from.x + (c.to.x - c.from.x) * p,
           y: c.from.y + (c.to.y - c.from.y) * p,
-          zoom: c.zoom,
+          zoom: (c.fromZoom ?? c.zoom) + (c.zoom - (c.fromZoom ?? c.zoom)) * p,
         }
       : { x: s.width / 2, y: s.height / 2, zoom: 1 },
     gate:
@@ -888,4 +900,98 @@ export function mergeCandidate(
       ],
     };
   }
+}
+
+/** Produce one validated transaction. Local tracks stay inside their shot; audio uses scene time.
+ * Moving/resizing a linked motion shifts the anchored line intact; moving a line stretches
+ * its linked motion from the fixed starting point. Locks and overlap errors remain explicit.
+ */
+export function planClipTiming(
+  s: SceneDocument,
+  target: "motion" | "dialogue" | "camera" | "audio",
+  id: string,
+  timing: { start?: number; duration?: number },
+  options: { allowProtected?: boolean } = {},
+): SceneCommand[] {
+  if (
+    !timing ||
+    Object.keys(timing).some((k) => !["start", "duration"].includes(k)) ||
+    Object.values(timing).some((v) => !Number.isFinite(v))
+  )
+    throw Error("Clip timing requires finite start/duration");
+  const list =
+    target === "motion"
+      ? s.motions
+      : target === "dialogue"
+        ? s.dialogue
+        : target === "camera"
+          ? s.camera
+          : s.audio;
+  const item = list.find((item) => item.id === id);
+  if (!item) throw Error("Unknown clip");
+  const bound =
+    "shotId" in item
+      ? s.shots.find((sh) => sh.id === item.shotId)?.duration
+      : sceneDuration(s);
+  if (!bound) throw Error("Clip requires a valid timing scope");
+  let duration = Math.max(
+    1,
+    Math.min(bound, Math.round(timing.duration ?? item.duration)),
+  );
+  let minStart = 0,
+    maxEnd = bound;
+  const linked =
+    target === "motion"
+      ? s.dialogue.find(
+          (line) => line.id === (item as (typeof s.motions)[number]).endLink,
+        )
+      : undefined;
+  if (linked) maxEnd = Math.min(maxEnd, bound - linked.duration);
+  if (target === "dialogue")
+    minStart = Math.max(
+      0,
+      ...s.motions.filter((m) => m.endLink === id).map((m) => m.start + 1),
+    );
+  if (maxEnd - minStart < 1)
+    throw Error("No room for linked timing within shot");
+  duration = Math.min(duration, maxEnd - minStart);
+  // A duration edit keeps its starting edge fixed. A move keeps duration fixed.
+  const start = Math.max(
+    minStart,
+    Math.min(
+      maxEnd -
+        (timing.duration !== undefined && timing.start === undefined
+          ? 1
+          : duration),
+      Math.round(timing.start ?? item.start),
+    ),
+  );
+  duration = Math.min(duration, maxEnd - start);
+  const commands: SceneCommand[] = [];
+  if (start !== item.start)
+    commands.push({
+      type: "set",
+      target,
+      targetId: id,
+      property: "start",
+      value: start,
+    });
+  if (duration !== item.duration)
+    commands.push({
+      type: "set",
+      target,
+      targetId: id,
+      property: "duration",
+      value: duration,
+    });
+  if (linked && linked.start !== start + duration)
+    commands.push({
+      type: "set",
+      target: "dialogue",
+      targetId: linked.id,
+      property: "start",
+      value: start + duration,
+    });
+  applyCommands(s, commands, options);
+  return commands;
 }

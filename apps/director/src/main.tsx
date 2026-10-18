@@ -102,7 +102,11 @@ function App() {
         companion={
           {
             status,
-            run,
+            run:
+              token &&
+              (status === "Claude Code ready" || status === "API ready")
+                ? run
+                : undefined,
             configure: () => setOpen(true),
             install,
           } as Parameters<typeof Director>[0]["companion"]

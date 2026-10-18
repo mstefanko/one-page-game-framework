@@ -1,0 +1,209 @@
+.pd-editable-timeline {
+  --pd-track-label: 100px;
+  border: 1px solid #dcd3c3;
+  border-radius: 7px;
+  background: #eee9de;
+  overflow: hidden;
+  margin: 18px 0 20px;
+  color: #514839;
+  font-size: 10px;
+  user-select: none;
+}
+.pd-timing-ruler {
+  display: flex;
+  height: 29px;
+  border-bottom: 1px solid #ddd4c5;
+  background: #f3eee4;
+}
+.pd-timing-ruler > b {
+  flex: 0 0 var(--pd-track-label);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+  padding: 9px 10px;
+  font-weight: 600;
+}
+.pd-timing-ruler > div {
+  position: relative;
+  flex: 1;
+  margin-right: 9px;
+  min-width: 0;
+}
+.pd-timing-ruler span {
+  position: absolute;
+  top: 8px;
+  transform: translateX(-50%);
+  font:
+    8px ui-monospace,
+    monospace;
+  white-space: nowrap;
+  color: #8a7a63;
+}
+.pd-timing-ruler span:first-child {
+  transform: none;
+}
+.pd-timing-ruler span:last-child {
+  transform: translateX(-100%);
+}
+.pd-timing-lane {
+  display: flex;
+  border-bottom: 1px solid #ddd4c5;
+  min-height: 44px;
+}
+.pd-timing-lane > b {
+  flex: 0 0 var(--pd-track-label);
+  padding: 10px;
+  font-size: 10px;
+  font-weight: 500;
+  background: #f5f0e7;
+}
+.pd-timing-lane > b small {
+  display: block;
+  color: #9b8b74;
+  font-size: 8px;
+  font-weight: 400;
+  margin-top: 2px;
+}
+.pd-timing-rail {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  margin-right: 9px;
+  background: repeating-linear-gradient(
+    90deg,
+    transparent 0,
+    transparent calc(16.6667% - 1px),
+    #ddd4c5 calc(16.6667% - 1px),
+    #ddd4c5 16.6667%
+  );
+}
+.pd-timing-clip {
+  position: absolute;
+  display: flex;
+  height: 27px;
+  min-width: 19px;
+  border: 1px solid #b6c0ac;
+  border-radius: 4px;
+  background: #d6decf;
+  box-shadow: 0 1px 2px #442c1310;
+  z-index: 1;
+}
+.pd .pd-timing-clip button {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  touch-action: none;
+  font-size: 9px;
+  color: #47503f;
+  min-width: 0;
+  line-height: 25px;
+}
+.pd .pd-timing-body {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  text-align: left;
+  cursor: grab;
+  flex: 1;
+  min-width: 1px;
+  padding: 0 4px !important;
+}
+.pd .pd-timing-edge {
+  width: 8px;
+  flex: 0 0 8px;
+  cursor: ew-resize;
+  opacity: 0.65;
+  color: #66715c;
+  background: #b6c3a845;
+}
+.pd .pd-timing-edge:hover {
+  background: #7e8b6d55;
+  opacity: 1;
+}
+.pd .pd-timing-start {
+  border-radius: 3px 0 0 3px;
+  border-right: 1px solid #8b99774d;
+}
+.pd .pd-timing-end {
+  border-radius: 0 3px 3px 0;
+  border-left: 1px solid #8b99774d;
+}
+.pd-timing-dialogue .pd-timing-clip {
+  background: #e8d7b6;
+  border-color: #d1b686;
+}
+.pd .pd-timing-dialogue button {
+  color: #785a32;
+}
+.pd-timing-camera .pd-timing-clip {
+  background: #cedce6;
+  border-color: #a8bdcd;
+}
+.pd .pd-timing-camera button {
+  color: #4b6576;
+}
+.pd-timing-audio .pd-timing-clip {
+  background: #ded4e1;
+  border-color: #c1acc6;
+}
+.pd .pd-timing-audio button {
+  color: #715477;
+}
+.pd-timing-clip.is-selected {
+  outline: 2px solid #a76b32;
+  outline-offset: 1px;
+  z-index: 3;
+}
+.pd-timing-clip.is-dragging {
+  outline: 2px solid #9e5b26;
+  box-shadow: 0 4px 9px #46301e33;
+  z-index: 4;
+}
+.pd-timing-clip.is-dragging .pd-timing-body {
+  cursor: grabbing;
+}
+.pd-timing-playhead {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: #b66a2a;
+  pointer-events: none;
+  z-index: 5;
+}
+.pd-timing-playhead:before {
+  content: "";
+  position: absolute;
+  left: -3px;
+  top: 0;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-top: 5px solid #b66a2a;
+}
+.pd-timing-status {
+  font-size: 9px;
+  color: #8c7a61;
+  background: #f5f0e7;
+  padding: 8px 10px;
+  margin: 0;
+  line-height: 1.5;
+  user-select: text;
+}
+.pd .pd-timing-clip button:focus-visible {
+  outline: 2px solid #3675a8;
+  outline-offset: 2px;
+  z-index: 6;
+}
+@media (max-width: 1100px) {
+  .pd-editable-timeline {
+    --pd-track-label: 78px;
+  }
+  .pd-timing-lane > b {
+    font-size: 9px;
+    padding: 9px 7px;
+  }
+  .pd-timing-status {
+    font-size: 8px;
+  }
+}

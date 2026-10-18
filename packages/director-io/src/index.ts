@@ -278,7 +278,7 @@ function sceneValid(scene: SceneDocument) {
       "dialogue",
     );
   for (const camera of scene.camera) {
-    keys(camera, "id shotId start duration from to zoom", "camera");
+    keys(camera, "id shotId start duration from to zoom fromZoom", "camera");
     keys(camera.from, "x y", "point");
     keys(camera.to, "x y", "point");
   }

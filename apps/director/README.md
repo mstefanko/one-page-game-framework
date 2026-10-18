@@ -75,3 +75,15 @@ npm run test:director:browser
 ```
 
 Read [the implementation plan](../../docs/20-cutscene-director-implementation-plan.md), [build contract](../../docs/25-director-build-contract.md), and [delivery evidence](../../docs/26-director-delivery.md). The larger R0–R8 plan includes further work: actual media-provider jobs, native ZIP/proprietary import adapters, full realistic art, advanced keyframe editing, Pocket Score copied-draft round trips, engine-specific in-game bridges and measured phone performance. This implementation is a working first release, not a claim that every roadmap gate is complete.
+
+## Editing scenes
+
+Use **New scene** in the header for an empty stage, a prompt, the station example or a recent saved scene. Prompt creation opens agent setup if needed and retains your brief. Blank scenes have no inherited station content. In Assets, add the starter library or import your pack, then place a family on stage; the inspector adds walks and dialogue. **Title card** also works without an actor.
+
+Select a motion in the timeline to place its endpoint. **Stage operation** switches between the starting pose and endpoint. Drag the highlighted handle or character body; the pointer keeps its grab offset. Numeric inspector fields use logical scene coordinates. Drag a timeline clip to move it, or its edges to resize it. Arrow keys adjust one frame (Shift: ten). Each drag is one undo step; Escape cancels. Linked dialogue/motion timing is validated together.
+
+The preview has a 768 × 528 CSS-pixel ceiling and fits down to leave room for controls. Collapse Timeline for more preview space. This sizing never changes exported resolution or camera framing.
+
+Open **Camera & framing** for each shot. Wide/close/pan/push-in presets and numeric centers/zoom define the actual exported camera. The camera frames flat 2D artwork; other angles need matching set and actor views. **Ask agent to plan another angle** starts that inventory/staging request rather than pretending the current artwork can rotate.
+
+Look choices show availability. Changing Look opens a **Preview only** comparison; **Keep revision** applies it. Missing pieces are listed and cannot be accepted as ready content. The current scene stays unchanged until you keep the candidate.
