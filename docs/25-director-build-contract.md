@@ -13,6 +13,8 @@ The foundation contract is `packages/director-core/src/types.ts`. Additive chang
 
 ## Public API agreement
 
+Time is measured in integer 60 Hz ticks. `Shot.start` and `AudioCue.start` are scene-global; `Motion.start`, `Dialogue.start` and `CameraKey.start` are local to their referenced shot. Absolute track time is `shot.start + track.start`. Durations are tick counts, never timestamps. A motion's `endLink` names dialogue in the same shot and stretches its endpoint to that line's local start.
+
 Core exports all types plus `createDemoScene(): SceneDocument`, `validateScene(scene): Diagnostic[]`, `evaluateScene(scene,tick): EvaluatedFrame`, `sceneDuration(scene): number`, `applyCommands(scene,commands,options?: {allowProtected?: boolean}): SceneDocument` (throws on invalid commands), `createCandidate(scene,commands,name,source?): Candidate`, `mergeCandidate(current,candidate,resolutions?: Record<string,'current'|'candidate'>): MergeResult`, `styleCoverage(scene,style): Coverage[]`, `planStyleChange(scene,style): SceneCommand[]`, `planWeatherChange(scene,weather,shotId?): SceneCommand[]`. Inputs are immutable; candidates retain a base snapshot. `allowProtected` is for an explicit manual override, never agent default.
 
 Runtime exports `renderScene(canvas: HTMLCanvasElement,scene: SceneDocument,tick: number,options?: {guides?: boolean; selectedId?: string; reducedMotion?: boolean; preview?: boolean}): void` and a shared playback controller with reading gates. Canvas scales through CSS; backing size can be logical or device-scaled. Imported media hydration must be supported without remote fetching. Pure evaluation drives the editor and offline player.

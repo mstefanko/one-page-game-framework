@@ -1,0 +1,77 @@
+.connection-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: #17161088;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.connection-dialog {
+  width: min(660px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  background: #faf8f2;
+  color: #29261f;
+  border: 1px solid #d9cfbf;
+  border-radius: 12px;
+  padding: 28px;
+  box-shadow: 0 20px 80px #0004;
+  font: 14px/1.6 system-ui;
+}
+.connection-dialog header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+.connection-dialog h2 {
+  font-size: 22px;
+  margin: 0;
+}
+.connection-dialog button {
+  cursor: pointer;
+  background: #25221c;
+  color: #fff;
+  padding: 9px 14px;
+  border: 0;
+  border-radius: 5px;
+  font: inherit;
+}
+.connection-dialog input {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  margin-top: 5px;
+  border: 1px solid #b8af9c;
+  border-radius: 5px;
+  font: inherit;
+}
+.connection-dialog label {
+  display: block;
+  font-weight: 600;
+}
+.connection-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 14px;
+}
+.connection-dialog code {
+  font:
+    12px ui-monospace,
+    monospace;
+  background: #ece7dc;
+  padding: 2px 4px;
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+.connection-note {
+  border-top: 1px solid #ddd5c6;
+  padding-top: 15px;
+  font-size: 12px;
+  color: #625c51;
+}
+.connection-dialog :focus-visible {
+  outline: 2px solid #366ece;
+  outline-offset: 3px;
+}

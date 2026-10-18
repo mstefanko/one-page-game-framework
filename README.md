@@ -62,3 +62,9 @@ Personal repository: [mstefanko/one-page-game-framework](https://github.com/mste
 New original code and documentation use [MIT](LICENSE). Imported content, historical documents and future starter assets have separate provenance requirements; see [attribution boundaries](NOTICE.md).
 
 [Historical drafts and supplied review reports](archive/README.md) are preserved for traceability. They may contain superseded or corrected claims and are not additional plans to follow.
+
+## Pocket Director
+
+The cutscene tool now lives alongside Pocket Score. Run `npm run dev:director` and open `http://127.0.0.1:4174`. It includes layered staging, dialogue and audio, prepared looks/weather, asset-pack and image/sprite imports, candidate review, persistent drafts and offline HTML output. `npm run director:companion` enables a separately paired local Claude connection.
+
+Read the [Director quickstart](apps/director/README.md), [implementation plan](docs/20-cutscene-director-implementation-plan.md), and [delivery evidence and remaining gates](docs/26-director-delivery.md). The realistic-art study and media generation are explicitly incomplete; project registration requires a compatible game host.

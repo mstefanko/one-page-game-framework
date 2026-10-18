@@ -2,6 +2,12 @@
 
 Decision: October 16, 2026. This extends the [framework plan](02-framework-plan.md). The repository scaffold exists; the products, APIs, library, and export features below are planned.
 
+**October 18 cutscene follow-on:** [Director research](19-cutscene-director-research.md), [implementation plan](20-cutscene-director-implementation-plan.md), and [five-concept Claude Design prompt](21-cutscene-director-claude-design-prompt.md) extend this strategy to scenes, sprites, reusable motions, dialogue and recorded speech. The music composer now implements part of this strategy; Pocket Director now implements a first scene/runtime and media-library slice; the broader shared game framework remains planned.
+
+The subsequent [mockup review](22-director-mockup-review.md) and [agent-assisted authoring plan](23-agent-assisted-director.md) add layered sets, Claude connections, candidate revisions and a workflow centered on agent assembly followed by human direction.
+
+The [consolidated director plan](20-cutscene-director-implementation-plan.md) is now authoritative for execution, including style families, environment profiles and incremental asset preparation. The [final Claude Design prompt](24-director-final-claude-design-prompt.md) produced the accepted revision. See [delivery evidence](26-director-delivery.md) and the [Director quickstart](../apps/director/README.md) for implemented features and remaining gates.
+
 ## 1. Recommendation
 
 Use one personal GitHub monorepo, **`mstefanko/one-page-game-framework`**, with independent creative tools and shared document, playback, storage, and export packages. Start with the chiptune composer. It must be useful without creating a game, opening the full studio, or signing in.

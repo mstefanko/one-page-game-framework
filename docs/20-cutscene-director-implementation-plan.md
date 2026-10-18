@@ -1,6 +1,6 @@
 # Cutscene director: consolidated implementation plan
 
-Revised October 18, 2026 after mockup review and the agent/style/weather workflow requests. **Status: implementation in progress against the final S01–S14 revision.** This is the authoritative director execution plan, replacing its earlier D0–D7 ordering and the provisional A0–A5 sequence in [the agent research](23-agent-assisted-director.md).
+Revised October 18, 2026 after mockup review and the agent/style/weather workflow requests. **Status: working first release implemented against S01–S14; broader R0–R8 gates remain tracked.** This is the authoritative director execution plan, replacing its earlier D0–D7 ordering and the provisional A0–A5 sequence in [the agent research](23-agent-assisted-director.md).
 
 Read with [framework contracts](02-framework-plan.md), [repository/asset strategy](03-repository-and-asset-strategy.md), [initial research](19-cutscene-director-research.md), [mockup critique](22-director-mockup-review.md), and [Claude integration research](23-agent-assisted-director.md). The [final Claude Design prompt](24-director-final-claude-design-prompt.md) asks for one implementation-ready synthesis and its missing screens; the [first five-concept prompt](21-cutscene-director-claude-design-prompt.md) is historical exploration.
 
@@ -342,3 +342,7 @@ First adapters: framework JSON scene/asset packs; PNG or PNG+Aseprite JSON with 
 ### Implementation order and honest release boundary
 
 Commit canonical contract/package foundation first. Parallel workers own core, editor, and runtime/I/O; the integrator owns companion, app/tool integration and end-to-end validation. Shared TypeScript contracts precede implementation; no parallel incompatible scene formats. Build a functional vertical slice with manual authoring, candidate merge, layered preview, imported packs, persistent drafts, native Claude/API companion routes and offline scene output. The broader R0–R8 gates remain release requirements; the delivery report must explicitly identify any incomplete media-provider, game-adapter, realistic-art or device validation work.
+
+### Implemented release evidence
+
+The supervised Sol 6.1 implementation now lives in `apps/director` and five `director-*` packages. [Delivery evidence](26-director-delivery.md) lists working flows, checks and remaining requirements; [the quickstart](../apps/director/README.md) documents browser/manual, native Claude/API, CLI, packs and registry usage. Actual asset imports and standalone outputs are implemented, while image generation, finished realistic artwork, advanced keyframe editing, Pocket Score round trips and engine-specific trigger adapters remain explicit follow-up gates.

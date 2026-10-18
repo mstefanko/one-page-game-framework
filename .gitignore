@@ -14,3 +14,6 @@ packages/music-io/src/player-runtime.generated.js
 apps/composer/public/THIRD_PARTY_NOTICES.txt
 # Local imported fan-game source, artwork and derived scores are never distributed.
 apps/composer/public/local-games/
+
+# Generated standalone cutscene player; rebuilt before typecheck/test/build.
+packages/director-runtime/src/bundle.generated.ts

@@ -1,9 +1,13 @@
-/** Portable director contracts. Integer ticks at 60 Hz; no executable asset data. */
+/** Portable director contracts. Integer ticks at 60 Hz; no executable asset data.
+ * Shot.start and AudioCue.start are scene-global. Motion.start, Dialogue.start,
+ * and CameraKey.start are local to their referenced shot. Durations are tick counts.
+ * Absolute track time = referenced shot.start + track.start.
+ */
 export type StyleId = '8-bit' | '16-bit' | 'realistic';
 export type Weather = 'clear' | 'rain' | 'storm';
 export interface Point { x: number; y: number }
-export interface Frame { x: number; y: number; width: number; height: number; duration: number; sockets?: Record<string, Point> }
-export interface Clip { name: string; frames: number[]; loop: boolean; fps: number }
+export interface Frame { x: number; y: number; width: number; height: number; /** Frame hold in integer 60 Hz ticks. */ duration: number; sockets?: Record<string, Point> }
+export interface Clip { name: string; frames: number[]; loop: boolean; /** Import/default-rate metadata; frame durations govern playback. */ fps: number }
 export interface AssetVariant {
   id: string; name: string; style: StyleId; revision: number;
   mediaId?: string; frames: Frame[]; clips: Clip[]; sockets: Record<string, Point>;
@@ -12,9 +16,9 @@ export interface AssetVariant {
 }
 export interface AssetFamily {
   id: string; name: string; kind: 'character' | 'set' | 'prop' | 'audio';
-  variants: AssetVariant[]; source: string; license: string; packId?: string;
+  variants: AssetVariant[]; source: string; license: string; author?: string; packId?: string;
 }
-export interface MediaResource { id: string; name: string; mime: string; dataUrl: string; source: string; license: string }
+export interface MediaResource { id: string; name: string; mime: string; dataUrl: string; source: string; license: string; author?: string }
 export interface PackManifest {
   schemaVersion: 1; id: string; name: string; version: string; author: string; license: string; source: string;
   assets: AssetFamily[]; media: MediaResource[];
