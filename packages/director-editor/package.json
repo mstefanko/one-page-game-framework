@@ -1,0 +1,16 @@
+{
+  "name": "@onepage/director-editor",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "types": "./src/index.ts",
+  "dependencies": {
+    "@onepage/director-core": "*",
+    "@onepage/director-runtime": "*",
+    "@onepage/director-io": "*",
+    "react": "19.3.1"
+  }
+}
