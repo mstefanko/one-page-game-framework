@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "description": "Modular creative tools and a planned runtime for self-contained one-page games.",
+  "description": "Pocket Game Toolkit: modular creative tools and a deterministic browser game runtime.",
   "license": "MIT",
   "engines": {
     "node": ">=24"
@@ -14,12 +14,12 @@
   ],
   "scripts": {
     "dev": "npm run build:player && vite --host 127.0.0.1",
-    "build": "npm run build:players && tsc --noEmit && vite build && vite build --config vite.director.config.ts",
+    "build": "npm run build:players && tsc --noEmit && vite build && vite build --config vite.director.config.ts && npm run build:game",
     "typecheck": "npm run build:director && tsc --noEmit",
     "test": "npm run build:players && vitest run",
     "test:browser": "playwright test",
     "check:scaffold": "node scripts/check-scaffold.mjs",
-    "check": "npm run check:scaffold && npm run typecheck && npm test && npm run build",
+    "check": "npm run check:scaffold && npm run check:game-purity && npm run game:replay:golden && npm run typecheck && npm test && npm run build",
     "setup:hooks": "git config --local core.hooksPath .githooks",
     "build:player": "node scripts/build-player.mjs",
     "import:terminator": "node scripts/import-terminator.mjs",
@@ -29,7 +29,17 @@
     "director:companion": "node scripts/director-service.mjs serve",
     "director:cli": "node scripts/director-service.mjs",
     "test:director:browser": "playwright test --config playwright.director.config.ts",
-    "build:players": "npm run build:player && npm run build:director"
+    "build:players": "npm run build:player && npm run build:director",
+    "dev:game": "vite --config vite.game.config.ts --host 127.0.0.1",
+    "build:game": "vite build --config vite.game.config.ts",
+    "check:game-purity": "node scripts/check-sim-purity.mjs --self-test && node scripts/check-sim-purity.mjs",
+    "game:validate": "node scripts/game-validate.mjs",
+    "game:scenario": "node scripts/game-scenario-run.mjs",
+    "game:replay": "node scripts/game-replay-verify.mjs",
+    "test:game": "vitest run packages/game-project packages/game-simulation packages/game-runtime && node --test tests/game/tools.test.mjs",
+    "test:game:browser": "playwright test --config playwright.game.config.ts",
+    "game:benchmark": "node scripts/game-benchmark.mjs",
+    "game:replay:golden": "node scripts/game-replay-verify.mjs --expected docs/evidence/game-m1/chromium-canonical-replay.json"
   },
   "repository": {
     "type": "git",
@@ -46,6 +56,8 @@
     "prettier": "3.6.2",
     "typescript": "7.0.2",
     "vite": "8.3.4",
-    "vitest": "5.0.5"
+    "vitest": "5.0.5",
+    "acorn": "8.15.0",
+    "pixi.js": "8.22.0"
   }
 }

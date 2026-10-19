@@ -1,0 +1,20 @@
+{
+  "id": "heavy-strike",
+  "startup": 12,
+  "active": 6,
+  "recovery": 20,
+  "hit": {
+    "x": 1536,
+    "y": -6912,
+    "width": 9984,
+    "height": 6400
+  },
+  "damage": 4,
+  "knockbackX": 1024,
+  "knockbackY": -640,
+  "stunTicks": 20,
+  "hitStopTicks": 6,
+  "guardDamage": 1,
+  "maxHits": 1,
+  "rehitTicks": 1
+}

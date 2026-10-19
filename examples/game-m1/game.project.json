@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "gameId": "pocket-first-light",
+  "title": "First Light",
+  "rulesModule": "platform-combat-v1",
+  "initialLevelId": "room-1",
+  "initialScenarioId": "start",
+  "levelIds": ["room-1", "room-2"],
+  "archetypeIds": ["hero", "sentinel"],
+  "abilityIds": ["quick-strike", "heavy-strike"],
+  "scenarioIds": ["start", "second-room", "lose-and-retry", "active-mechanics"],
+  "viewport": {
+    "width": 320,
+    "height": 180
+  }
+}

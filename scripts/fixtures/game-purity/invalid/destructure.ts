@@ -1,0 +1,2 @@
+const { random } = Math;
+export const value = random();

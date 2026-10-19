@@ -17,3 +17,8 @@ apps/composer/public/local-games/
 
 # Generated standalone cutscene player; rebuilt before typecheck/test/build.
 packages/director-runtime/src/bundle.generated.ts
+
+# Built game and browser fixture bundles.
+dist-game/
+dist-game-fixture/
+.local-game-tests/

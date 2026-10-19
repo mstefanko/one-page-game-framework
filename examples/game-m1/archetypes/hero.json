@@ -1,0 +1,32 @@
+{
+  "id": "hero",
+  "body": {
+    "x": -1536,
+    "y": -6144,
+    "width": 3072,
+    "height": 6144
+  },
+  "hurt": {
+    "x": -1536,
+    "y": -6144,
+    "width": 3072,
+    "height": 6144
+  },
+  "push": {
+    "x": -1280,
+    "y": -5888,
+    "width": 2560,
+    "height": 5888
+  },
+  "health": 12,
+  "speed": 640,
+  "jumpSpeed": 1792,
+  "gravity": 96,
+  "maxFallSpeed": 2048,
+  "coyoteTicks": 6,
+  "jumpBufferTicks": 6,
+  "attackBufferTicks": 6,
+  "abilities": ["quick-strike", "heavy-strike"],
+  "ai": "none",
+  "aiRange": 46080
+}

@@ -1,0 +1,44 @@
+{
+  "date": "2026-10-19",
+  "baseCommit": "71647d741f1a6f3de60e37c57f6c99e99564ee67",
+  "deliveryBranch": "codex/game-runtime-m1",
+  "environment": {
+    "node": "v26.0.0",
+    "os": "macOS",
+    "arch": "arm64",
+    "cpu": "Apple M4"
+  },
+  "identity": {
+    "rulesBuildId": "sha256:314b9295c0573fbe0e133fafd2721e6a6353f4dd9557333538cdbb43c63bcf75",
+    "contentId": "sha256:c6378414fc59fdc346fb5f450eb8122268d71797d5ceffe78cc6ca4ff9a95a4e"
+  },
+  "artifactSetId": "sha256:d204392ee3e5664e36e366a74b05e69b6e1ebb2a1982f262e50931720db04402",
+  "checks": {
+    "cleanNpmCi": true,
+    "rootCheck": true,
+    "repositoryUnitTests": 348,
+    "gameUnitTestsSubset": 190,
+    "additionalNodeToolTests": 18,
+    "browserPassed": 40,
+    "browserSkipped": 2,
+    "browserSkipReason": "Chromium-specific CDP BFCache navigation on Firefox and WebKit; persisted lifecycle checks run on all engines",
+    "browserCommand": "CI=true npm run test:game:browser",
+    "namedScenarios": 4,
+    "namedAssertions": 25,
+    "replayTicks": 10000,
+    "intermediateCheckpoints": 10
+  },
+  "runtimeJavaScript": {
+    "gzipBytes": 185085,
+    "compression": "Python gzip level9, mtime0, sum of every emitted .js chunk",
+    "previousGzipBytes": 180992
+  },
+  "notVerified": [
+    "Physical phone",
+    "Real gamepad hardware",
+    "Physical GPU recovery",
+    "Measured memory leaks",
+    "Unaided human playtest",
+    "Remote Node24 CI run"
+  ]
+}

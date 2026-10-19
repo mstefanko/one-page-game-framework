@@ -1,0 +1,1 @@
+{"name":"@onepage/game-simulation","version":"0.0.0","private":true,"type":"module","exports":{".":"./src/index.ts"},"types":"./src/index.ts","dependencies":{"@onepage/game-project":"0.0.0"}}

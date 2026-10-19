@@ -23,3 +23,28 @@ jobs:
         with:
           name: browser-failures
           path: test-results/
+  game-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --ignore-scripts
+      - run: npm run check:game-purity
+      - run: npm run game:validate
+      - run: npm run test:game
+      - run: npm run game:scenario
+      - run: npm run game:replay
+      - run: npm run game:replay:golden
+      - run: npx playwright install --with-deps chromium firefox webkit
+      - run: npm run build:game
+      - run: npm run test:game:browser
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: game-runtime-failures
+          path: |
+            test-results/
+            playwright-report/

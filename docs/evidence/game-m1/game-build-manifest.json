@@ -1,0 +1,79 @@
+{
+  "format": "shipping-artifacts-v1",
+  "compatibilityPolicy": "exact-reviewed-rules-source-and-content",
+  "rulesContract": {
+    "format": "reviewed-rules-source-v1",
+    "languageTarget": "ES2022",
+    "snapshotVersion": 1,
+    "ticksPerSecond": 60,
+    "fixedUnitsPerPixel": 256
+  },
+  "identity": {
+    "rulesBuildId": "sha256:314b9295c0573fbe0e133fafd2721e6a6353f4dd9557333538cdbb43c63bcf75",
+    "contentId": "sha256:c6378414fc59fdc346fb5f450eb8122268d71797d5ceffe78cc6ca4ff9a95a4e"
+  },
+  "compiler": {
+    "vite": "8.3.4",
+    "esbuild": "0.28.2",
+    "rolldown": "1.2.14",
+    "node": "v26.0.0"
+  },
+  "artifacts": [
+    {
+      "path": "assets/CanvasPool-DigpUAE5.js",
+      "bytes": 113000,
+      "sha256": "0c8595dfc9b856e52d58fec43fd8df58bc0cec80ff91a621843addc774452be7"
+    },
+    {
+      "path": "assets/RenderTargetSystem-V1pnaCdS.js",
+      "bytes": 78099,
+      "sha256": "a015e35e3c163501694d3a7b00a11d2617dc29dc26561a3b17ca526c62da97d1"
+    },
+    {
+      "path": "assets/browserAll-CNvy2ont.js",
+      "bytes": 43485,
+      "sha256": "9b05360cfd9654d30e4c63730e4be25fd66bf2bf236ab48fe2083aec618b2e7f"
+    },
+    {
+      "path": "assets/canvasUtils-Cv3JNKox.js",
+      "bytes": 6013,
+      "sha256": "862e20c7d87238239578f076965351517dbea24911148df890312753612f9d22"
+    },
+    {
+      "path": "assets/getTexelRangeRects-DjZrj0y_.js",
+      "bytes": 11318,
+      "sha256": "9aa54dca6f15445a233716aa7aa4b1a272af47aefecf9a20041b74709e30682e"
+    },
+    {
+      "path": "assets/getTextureBatchBindGroup-CZth-Fi7.js",
+      "bytes": 344,
+      "sha256": "e42f3256303a0712824385e6da1f2f824f70ba8e154b7d02af053d84fd6e7f87"
+    },
+    {
+      "path": "assets/index-DW_hx8tn.js",
+      "bytes": 384961,
+      "sha256": "0bd220cb018cbce44edbcb0ee4ad51b236cdf87fbdf22a9c7156f9004358d181"
+    },
+    {
+      "path": "assets/index-PGqMmEhY.css",
+      "bytes": 5236,
+      "sha256": "5057d33cef0728d2a8abe8baf69aba0660f0e622d29bf6c63c6971ff9e0142d6"
+    },
+    {
+      "path": "assets/init-oSpFISQq.js",
+      "bytes": 15180,
+      "sha256": "079257d3f682a3e032e052e0f0f52b8adddbdd43fcaef98eedcee127bbb83dae"
+    },
+    {
+      "path": "assets/webworkerAll-BPKJxD-A.js",
+      "bytes": 55,
+      "sha256": "14a6e64a1d0bb0f2e9c2c89e62db7bff985c7a440b4e74da435b2644cba1228a"
+    },
+    {
+      "path": "index.html",
+      "bytes": 922,
+      "sha256": "69cd6d8a637625b7cf9c9e7b59411e1750c4d26144e02f00bd8674bcb736189f"
+    }
+  ],
+  "artifactSetId": "sha256:d204392ee3e5664e36e366a74b05e69b6e1ebb2a1982f262e50931720db04402"
+}

@@ -1,0 +1,104 @@
+{
+  "id": "lose-and-retry",
+  "levelId": "room-1",
+  "seed": 123456789,
+  "playerSlots": [0],
+  "ticks": 660,
+  "commands": [
+    {
+      "tick": 600,
+      "type": "restart"
+    }
+  ],
+  "actions": [
+    {
+      "tick": 600,
+      "slot": 0,
+      "sequence": 0,
+      "heldPatch": {
+        "right": true
+      },
+      "edges": [
+        {
+          "action": "right",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 606,
+      "slot": 0,
+      "sequence": 1,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 607,
+      "slot": 0,
+      "sequence": 2,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "tick": 225,
+      "path": "/status",
+      "equals": "lost"
+    },
+    {
+      "tick": 225,
+      "path": "/actors/0/health",
+      "equals": 0
+    },
+    {
+      "tick": 600,
+      "path": "/status",
+      "equals": "lost"
+    },
+    {
+      "tick": 601,
+      "path": "/status",
+      "equals": "playing"
+    },
+    {
+      "tick": 601,
+      "path": "/actors/0/health",
+      "equals": 12
+    },
+    {
+      "tick": 601,
+      "path": "/actors/0/motionEpoch",
+      "equals": 2
+    },
+    {
+      "tick": 601,
+      "path": "/actors/0/x",
+      "equals": 12288
+    },
+    {
+      "tick": 607,
+      "path": "/actors/0/execution/abilityId",
+      "equals": "quick-strike"
+    },
+    {
+      "tick": 660,
+      "path": "/status",
+      "equals": "playing"
+    }
+  ]
+}

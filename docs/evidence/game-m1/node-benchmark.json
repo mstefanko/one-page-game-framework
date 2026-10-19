@@ -1,0 +1,57 @@
+{
+  "scope": "M1 small fixture; trend, not the 40/20 or 100/100 release gate",
+  "environment": {
+    "node": "v26.0.0",
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpu": "Apple M4"
+  },
+  "warmupTicks": 2000,
+  "measuredTicks": 10000,
+  "identity": {
+    "rulesBuildId": "sha256:314b9295c0573fbe0e133fafd2721e6a6353f4dd9557333538cdbb43c63bcf75",
+    "contentId": "sha256:c6378414fc59fdc346fb5f450eb8122268d71797d5ceffe78cc6ca4ff9a95a4e"
+  },
+  "runs": [
+    {
+      "run": 1,
+      "playingTicks": 10000,
+      "maxActors": 2,
+      "p50ms": 0.00620800000001509,
+      "p95ms": 0.01895799999999781,
+      "maxMs": 0.9411249999999995
+    },
+    {
+      "run": 2,
+      "playingTicks": 10000,
+      "maxActors": 2,
+      "p50ms": 0.005625000000009095,
+      "p95ms": 0.00908300000003237,
+      "maxMs": 0.9850420000000213
+    },
+    {
+      "run": 3,
+      "playingTicks": 10000,
+      "maxActors": 2,
+      "p50ms": 0.004707999999993717,
+      "p95ms": 0.01104099999997743,
+      "maxMs": 2.1738750000000095
+    },
+    {
+      "run": 4,
+      "playingTicks": 10000,
+      "maxActors": 2,
+      "p50ms": 0.004707999999993717,
+      "p95ms": 0.011292000000025837,
+      "maxMs": 2.559874999999977
+    },
+    {
+      "run": 5,
+      "playingTicks": 10000,
+      "maxActors": 2,
+      "p50ms": 0.00458400000002257,
+      "p95ms": 0.005916999999953987,
+      "maxMs": 0.9697089999999662
+    }
+  ]
+}

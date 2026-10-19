@@ -1,0 +1,1660 @@
+{
+  "id": "active-mechanics",
+  "levelId": "room-1",
+  "seed": 123456789,
+  "playerSlots": [0],
+  "ticks": 600,
+  "commands": [
+    {
+      "tick": 300,
+      "type": "restart"
+    }
+  ],
+  "actions": [
+    {
+      "tick": 0,
+      "slot": 0,
+      "sequence": 0,
+      "heldPatch": {
+        "right": true,
+        "attack": true,
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "right",
+          "kind": "pressed"
+        },
+        {
+          "action": "attack",
+          "kind": "pressed"
+        },
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 2,
+      "slot": 0,
+      "sequence": 1,
+      "heldPatch": {
+        "attack": false,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        },
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 24,
+      "slot": 0,
+      "sequence": 2,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 26,
+      "slot": 0,
+      "sequence": 3,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 34,
+      "slot": 0,
+      "sequence": 4,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 35,
+      "slot": 0,
+      "sequence": 5,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 42,
+      "slot": 0,
+      "sequence": 6,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 48,
+      "slot": 0,
+      "sequence": 7,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 50,
+      "slot": 0,
+      "sequence": 8,
+      "heldPatch": {
+        "attack": false,
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        },
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 71,
+      "slot": 0,
+      "sequence": 9,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 72,
+      "slot": 0,
+      "sequence": 10,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 73,
+      "slot": 0,
+      "sequence": 11,
+      "heldPatch": {
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 74,
+      "slot": 0,
+      "sequence": 12,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 75,
+      "slot": 0,
+      "sequence": 13,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 83,
+      "slot": 0,
+      "sequence": 14,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 85,
+      "slot": 0,
+      "sequence": 15,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 96,
+      "slot": 0,
+      "sequence": 16,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 98,
+      "slot": 0,
+      "sequence": 17,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 100,
+      "slot": 0,
+      "sequence": 18,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 115,
+      "slot": 0,
+      "sequence": 19,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 120,
+      "slot": 0,
+      "sequence": 20,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 122,
+      "slot": 0,
+      "sequence": 21,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 123,
+      "slot": 0,
+      "sequence": 22,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 135,
+      "slot": 0,
+      "sequence": 23,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 142,
+      "slot": 0,
+      "sequence": 24,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 144,
+      "slot": 0,
+      "sequence": 25,
+      "heldPatch": {
+        "attack": true,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        },
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 145,
+      "slot": 0,
+      "sequence": 26,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 146,
+      "slot": 0,
+      "sequence": 27,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 150,
+      "slot": 0,
+      "sequence": 28,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 153,
+      "slot": 0,
+      "sequence": 29,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 168,
+      "slot": 0,
+      "sequence": 30,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 170,
+      "slot": 0,
+      "sequence": 31,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 180,
+      "slot": 0,
+      "sequence": 32,
+      "heldPatch": {
+        "right": false
+      },
+      "edges": [
+        {
+          "action": "right",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 185,
+      "slot": 0,
+      "sequence": 33,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 190,
+      "slot": 0,
+      "sequence": 34,
+      "heldPatch": {
+        "left": true
+      },
+      "edges": [
+        {
+          "action": "left",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 192,
+      "slot": 0,
+      "sequence": 35,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 194,
+      "slot": 0,
+      "sequence": 36,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 200,
+      "slot": 0,
+      "sequence": 37,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 210,
+      "slot": 0,
+      "sequence": 38,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 213,
+      "slot": 0,
+      "sequence": 39,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 215,
+      "slot": 0,
+      "sequence": 40,
+      "heldPatch": {
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 216,
+      "slot": 0,
+      "sequence": 41,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 218,
+      "slot": 0,
+      "sequence": 42,
+      "heldPatch": {
+        "jump": false,
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        },
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 235,
+      "slot": 0,
+      "sequence": 43,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 240,
+      "slot": 0,
+      "sequence": 44,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 242,
+      "slot": 0,
+      "sequence": 45,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 250,
+      "slot": 0,
+      "sequence": 46,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 264,
+      "slot": 0,
+      "sequence": 47,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 265,
+      "slot": 0,
+      "sequence": 48,
+      "heldPatch": {
+        "left": false
+      },
+      "edges": [
+        {
+          "action": "left",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 266,
+      "slot": 0,
+      "sequence": 49,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 284,
+      "slot": 0,
+      "sequence": 50,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 285,
+      "slot": 0,
+      "sequence": 51,
+      "heldPatch": {
+        "guard": false,
+        "left": false,
+        "right": false,
+        "jump": false,
+        "attack": false,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        },
+        {
+          "action": "left",
+          "kind": "cancel"
+        },
+        {
+          "action": "right",
+          "kind": "cancel"
+        },
+        {
+          "action": "jump",
+          "kind": "cancel"
+        },
+        {
+          "action": "attack",
+          "kind": "cancel"
+        },
+        {
+          "action": "heavy",
+          "kind": "cancel"
+        },
+        {
+          "action": "guard",
+          "kind": "cancel"
+        }
+      ]
+    },
+    {
+      "tick": 286,
+      "slot": 0,
+      "sequence": 52,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 288,
+      "slot": 0,
+      "sequence": 53,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 290,
+      "slot": 0,
+      "sequence": 54,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 300,
+      "slot": 0,
+      "sequence": 55,
+      "heldPatch": {
+        "right": true,
+        "attack": true,
+        "heavy": true,
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "right",
+          "kind": "pressed"
+        },
+        {
+          "action": "attack",
+          "kind": "pressed"
+        },
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        },
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 302,
+      "slot": 0,
+      "sequence": 56,
+      "heldPatch": {
+        "attack": false,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        },
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 324,
+      "slot": 0,
+      "sequence": 57,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 326,
+      "slot": 0,
+      "sequence": 58,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 335,
+      "slot": 0,
+      "sequence": 59,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 348,
+      "slot": 0,
+      "sequence": 60,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 350,
+      "slot": 0,
+      "sequence": 61,
+      "heldPatch": {
+        "attack": false,
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        },
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 371,
+      "slot": 0,
+      "sequence": 62,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 372,
+      "slot": 0,
+      "sequence": 63,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 373,
+      "slot": 0,
+      "sequence": 64,
+      "heldPatch": {
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 374,
+      "slot": 0,
+      "sequence": 65,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 385,
+      "slot": 0,
+      "sequence": 66,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 396,
+      "slot": 0,
+      "sequence": 67,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 398,
+      "slot": 0,
+      "sequence": 68,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 400,
+      "slot": 0,
+      "sequence": 69,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 415,
+      "slot": 0,
+      "sequence": 70,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 420,
+      "slot": 0,
+      "sequence": 71,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 422,
+      "slot": 0,
+      "sequence": 72,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 423,
+      "slot": 0,
+      "sequence": 73,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 435,
+      "slot": 0,
+      "sequence": 74,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 442,
+      "slot": 0,
+      "sequence": 75,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 444,
+      "slot": 0,
+      "sequence": 76,
+      "heldPatch": {
+        "attack": true,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        },
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 445,
+      "slot": 0,
+      "sequence": 77,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 446,
+      "slot": 0,
+      "sequence": 78,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 450,
+      "slot": 0,
+      "sequence": 79,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 453,
+      "slot": 0,
+      "sequence": 80,
+      "heldPatch": {
+        "jump": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 468,
+      "slot": 0,
+      "sequence": 81,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 470,
+      "slot": 0,
+      "sequence": 82,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 480,
+      "slot": 0,
+      "sequence": 83,
+      "heldPatch": {
+        "right": false
+      },
+      "edges": [
+        {
+          "action": "right",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 485,
+      "slot": 0,
+      "sequence": 84,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 490,
+      "slot": 0,
+      "sequence": 85,
+      "heldPatch": {
+        "left": true
+      },
+      "edges": [
+        {
+          "action": "left",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 492,
+      "slot": 0,
+      "sequence": 86,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 494,
+      "slot": 0,
+      "sequence": 87,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 500,
+      "slot": 0,
+      "sequence": 88,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 510,
+      "slot": 0,
+      "sequence": 89,
+      "heldPatch": {
+        "jump": true
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 513,
+      "slot": 0,
+      "sequence": 90,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 515,
+      "slot": 0,
+      "sequence": 91,
+      "heldPatch": {
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 516,
+      "slot": 0,
+      "sequence": 92,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 518,
+      "slot": 0,
+      "sequence": 93,
+      "heldPatch": {
+        "jump": false,
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "jump",
+          "kind": "released"
+        },
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 535,
+      "slot": 0,
+      "sequence": 94,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 540,
+      "slot": 0,
+      "sequence": 95,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 542,
+      "slot": 0,
+      "sequence": 96,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 550,
+      "slot": 0,
+      "sequence": 97,
+      "heldPatch": {
+        "guard": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 564,
+      "slot": 0,
+      "sequence": 98,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 565,
+      "slot": 0,
+      "sequence": 99,
+      "heldPatch": {
+        "left": false
+      },
+      "edges": [
+        {
+          "action": "left",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 566,
+      "slot": 0,
+      "sequence": 100,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    },
+    {
+      "tick": 584,
+      "slot": 0,
+      "sequence": 101,
+      "heldPatch": {
+        "heavy": true
+      },
+      "edges": [
+        {
+          "action": "heavy",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 585,
+      "slot": 0,
+      "sequence": 102,
+      "heldPatch": {
+        "guard": false,
+        "left": false,
+        "right": false,
+        "jump": false,
+        "attack": false,
+        "heavy": false
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        },
+        {
+          "action": "left",
+          "kind": "cancel"
+        },
+        {
+          "action": "right",
+          "kind": "cancel"
+        },
+        {
+          "action": "jump",
+          "kind": "cancel"
+        },
+        {
+          "action": "attack",
+          "kind": "cancel"
+        },
+        {
+          "action": "heavy",
+          "kind": "cancel"
+        },
+        {
+          "action": "guard",
+          "kind": "cancel"
+        }
+      ]
+    },
+    {
+      "tick": 586,
+      "slot": 0,
+      "sequence": 103,
+      "heldPatch": {
+        "guard": true
+      },
+      "edges": [
+        {
+          "action": "guard",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 588,
+      "slot": 0,
+      "sequence": 104,
+      "heldPatch": {
+        "attack": true
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "pressed"
+        }
+      ]
+    },
+    {
+      "tick": 590,
+      "slot": 0,
+      "sequence": 105,
+      "heldPatch": {
+        "attack": false
+      },
+      "edges": [
+        {
+          "action": "attack",
+          "kind": "released"
+        }
+      ]
+    }
+  ],
+  "assertions": [
+    {
+      "tick": 1,
+      "path": "/actors/0/execution/abilityId",
+      "equals": "heavy-strike"
+    },
+    {
+      "tick": 35,
+      "path": "/actors/0/grounded",
+      "equals": false
+    },
+    {
+      "tick": 350,
+      "path": "/actors/0/freezeTicks",
+      "equals": 4
+    },
+    {
+      "tick": 246,
+      "path": "/actors/0/riderId",
+      "equals": "ferry"
+    },
+    {
+      "tick": 350,
+      "path": "/actors/0/health",
+      "equals": 12
+    },
+    {
+      "tick": 246,
+      "path": "/platforms/0",
+      "equals": {
+        "blocked": false,
+        "direction": -1,
+        "id": "ferry",
+        "x": 84480,
+        "y": 32768
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+import { build } from 'esbuild';
+import { mkdir,writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { loadGame } from './lib/game-tools.mjs';
+import { gameRoot } from './lib/game-identity.mjs';
+const game=await loadGame();
+const directory=resolve(gameRoot,'dist-game-fixture');
+await mkdir(directory,{recursive:true});
+await build({absWorkingDir:gameRoot,entryPoints:['tests/game/browser/fixture.ts'],bundle:true,outfile:resolve(directory,'fixture.js'),platform:'browser',format:'esm',target:'es2022',define:{__GAME_FIXTURE_DEFINITIONS__:JSON.stringify(game.definitions),__GAME_FIXTURE_IDENTITY__:JSON.stringify(game.identity)}});
+await writeFile(resolve(directory,'index.html'),'<!doctype html><html><head><meta charset="utf-8"><title>Built game replay evidence</title></head><body><p>Deterministic replay fixture (test artifact)</p><script type="module" src="/fixture/fixture.js"></script></body></html>');
+console.log(JSON.stringify({ok:true,directory,identity:game.identity}));

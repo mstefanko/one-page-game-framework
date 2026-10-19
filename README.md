@@ -1,4 +1,4 @@
-# One-page game framework
+# Pocket Game Toolkit
 
 A modular toolkit for making small games and creative assets that are useful on their own. The first tool is Pocket Score, a browser chiptune composer: remix a starter, compose your own song, import MIDI, save reusable assets, and export music for games or other content.
 
@@ -68,3 +68,10 @@ New original code and documentation use [MIT](LICENSE). Imported content, histor
 The cutscene tool now lives alongside Pocket Score. Run `npm run dev:director` and open `http://127.0.0.1:4174`. It includes layered staging, dialogue and audio, prepared looks/weather, asset-pack and image/sprite imports, candidate review, persistent drafts and offline HTML output. `npm run director:companion` enables a separately paired local Claude connection.
 
 Read the [Director quickstart](apps/director/README.md), [implementation plan](docs/20-cutscene-director-implementation-plan.md), and [delivery evidence and remaining gates](docs/26-director-delivery.md). The realistic-art study and media generation are explicitly incomplete; project registration requires a compatible game host.
+
+
+## Game runtime M1
+
+First Light is a playable two-room platform/combat example with pure deterministic rules, JSON content, checkpoints, replay tools and a Pixi browser host. Run `npm ci` and `npm run dev:game` (port 4180); `npm run build:game` creates `dist-game/`.
+
+Start with the [review handoff](docs/35-m1-review-handoff.md), [review fixes](docs/36-m1-review-resolution.md), [repository direction](docs/37-repository-direction.md) and [M2 implementation handoff](docs/38-m2-handoff.md). The existing repository URL and `@onepage` package names remain stable; one-page delivery is an export target within the broader toolkit.
